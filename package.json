@@ -1,0 +1,19 @@
+{
+  "name": "talaan-app",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test:check": "node --loader ts-node/esm src/check.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0",
+    "dexie": "^3.2.4",
+    "lucide-react": "^0.359.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.10.0",
+    "typescript": "^5.4.0"
+  }
+}
+
