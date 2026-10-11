@@ -5,13 +5,30 @@ import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { syncManager, type SyncState } from '../sync';
 
 export const SyncBadge: React.FC = () => {
-  const [syncState, setSyncState] = useState<SyncState>(() => syncManager.getState());
+  const [mounted, setMounted] = useState(false);
+  const [syncState, setSyncState] = useState<SyncState>({
+    isOnline: true,
+    isSyncing: false,
+    pendingCount: 0,
+    lastSyncedAt: null,
+  });
 
   useEffect(() => {
+    setMounted(true);
+    setSyncState(syncManager.getState());
     return syncManager.subscribe((state) => {
       setSyncState(state);
     });
   }, []);
+
+  if (!mounted) {
+    return (
+      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-700/60 text-emerald-100">
+        <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+        <span>Sync</span>
+      </div>
+    );
+  }
 
   const handleManualSync = () => {
     if (!syncState.isSyncing) {
@@ -58,4 +75,3 @@ export const SyncBadge: React.FC = () => {
     </button>
   );
 };
-

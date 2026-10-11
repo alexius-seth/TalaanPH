@@ -8,6 +8,14 @@ export interface ReceiptParams {
   phoneNumber?: string;
 }
 
+export interface ReminderParams {
+  storeName: string;
+  nickname: string;
+  balance: number;
+  dueDate: string;
+  phoneNumber?: string;
+}
+
 /**
  * Formats a single-segment GSM-7 compliant SMS receipt (<= 160 chars).
  */
@@ -30,8 +38,23 @@ export function formatReceiptText(params: ReceiptParams): string {
 }
 
 /**
+ * Formats a single-segment GSM-7 compliant SMS payment reminder.
+ */
+export function formatReminderText(params: ReminderParams): string {
+  const cleanStore = params.storeName.trim().slice(0, 18);
+  const cleanNick = params.nickname.trim().slice(0, 16);
+  const balanceStr = params.balance.toFixed(2);
+
+  return [
+    `[Talaan - ${cleanStore}]`,
+    `Paalala kay suki ${cleanNick}:`,
+    `May nakatakdang utang na P${balanceStr} ngayong araw (${params.dueDate}).`,
+    'Paki-settle po sa tindahan. Maraming salamat!',
+  ].join('\n');
+}
+
+/**
  * Checks if the user device is iOS/iPadOS for SMS URI parameter delimiter differences.
- * iOS uses ';' or '&' while Android/standard RFC uses '?'.
  */
 function isIOSDevice(): boolean {
   if (typeof navigator === 'undefined') return false;
@@ -43,8 +66,20 @@ function isIOSDevice(): boolean {
  */
 export async function dispatchReceiptSms(params: ReceiptParams): Promise<boolean> {
   const receipt = formatReceiptText(params);
-  const encodedBody = encodeURIComponent(receipt);
-  const rawPhone = (params.phoneNumber || '').replace(/[^0-9+]/g, '');
+  return dispatchNativeSms(receipt, params.phoneNumber, `Resibo - ${params.nickname}`);
+}
+
+/**
+ * Dispatches an SMS due date reminder via native SMS URI handler with navigator.share() fallback.
+ */
+export async function dispatchReminderSms(params: ReminderParams): Promise<boolean> {
+  const message = formatReminderText(params);
+  return dispatchNativeSms(message, params.phoneNumber, `Paalala - ${params.nickname}`);
+}
+
+async function dispatchNativeSms(text: string, phone?: string, shareTitle?: string): Promise<boolean> {
+  const encodedBody = encodeURIComponent(text);
+  const rawPhone = (phone || '').replace(/[^0-9+]/g, '');
 
   const isIOS = isIOSDevice();
   const separator = isIOS ? '&' : '?';
@@ -52,32 +87,22 @@ export async function dispatchReceiptSms(params: ReceiptParams): Promise<boolean
     ? `sms:${rawPhone}${separator}body=${encodedBody}`
     : `sms:${separator}body=${encodedBody}`;
 
-  // Try opening native SMS app
   try {
     if (typeof window !== 'undefined') {
       window.location.href = smsUri;
       return true;
     }
-  } catch (err) {
-    console.warn('[SMS] Direct URI dispatch failed, attempting share fallback:', err);
-  }
+  } catch {}
 
-  // Fallback to Web Share API
   if (typeof navigator !== 'undefined' && navigator.share) {
     try {
       await navigator.share({
-        title: `Resibo - ${params.nickname}`,
-        text: receipt,
+        title: shareTitle ?? 'Talaan',
+        text,
       });
       return true;
-    } catch (shareErr) {
-      // User cancelled share or share failed
-      if ((shareErr as DOMException).name !== 'AbortError') {
-        console.error('[SMS] Navigator share failed:', shareErr);
-      }
-    }
+    } catch {}
   }
 
   return false;
 }
-

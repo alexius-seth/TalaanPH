@@ -5,6 +5,9 @@ import type {
   Transaction,
   LedgerEntry,
   TransactionItem,
+  PaymentReminder,
+  Product,
+  ProductPackageUnit,
   OutboxEntry,
   SyncMeta,
 } from './types';
@@ -15,6 +18,9 @@ export class TalaanDatabase extends Dexie {
   transactions!: Table<Transaction, string>;
   ledgerEntries!: Table<LedgerEntry, string>;
   transactionItems!: Table<TransactionItem, string>;
+  paymentReminders!: Table<PaymentReminder, string>;
+  products!: Table<Product, string>;
+  packageUnits!: Table<ProductPackageUnit, string>;
   syncOutbox!: Table<OutboxEntry, string>;
   syncMeta!: Table<SyncMeta, string>;
 
@@ -30,8 +36,18 @@ export class TalaanDatabase extends Dexie {
       syncOutbox: 'id, action, status, timestamp, retryCount',
       syncMeta: 'key',
     });
+
+    this.version(2).stores({
+      transactions: 'id, &referenceNumber, type, dueDate, createdAt',
+      paymentReminders: 'id, customerId, transactionId, dueDate, status, createdAt',
+    });
+
+    this.version(3).stores({
+      transactionItems: 'id, transactionId, productId',
+      products: 'id, name, category, currentStock, createdAt',
+      packageUnits: 'id, productId, unitName',
+    });
   }
 }
 
 export const db = new TalaanDatabase();
-

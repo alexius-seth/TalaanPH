@@ -1,10 +1,13 @@
 import { db } from './db';
+import { generateUUID } from './lib/uuid';
 import type {
   Account,
   Customer,
   CreateCustomerInput,
+  UpdateCustomerInput,
   LedgerEntry,
   OutboxEntry,
+  PaymentReminder,
   RecordTransactionInput,
   Transaction,
   TransactionItem,
@@ -39,7 +42,7 @@ export class LedgerService {
       const existing = await db.accounts.where('code').equals(acc.code).first();
       if (!existing) {
         await db.accounts.add({
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           code: acc.code,
           type: acc.type,
           createdAt: new Date().toISOString(),
@@ -52,9 +55,9 @@ export class LedgerService {
    * Creates customer, their AR account, and an outbox queue entry in a single atomic transaction.
    */
   async createCustomer(input: CreateCustomerInput): Promise<Customer> {
-    const customerId = crypto.randomUUID();
-    const accountId = crypto.randomUUID();
-    const outboxId = crypto.randomUUID();
+    const customerId = generateUUID();
+    const accountId = generateUUID();
+    const outboxId = generateUUID();
     const now = new Date().toISOString();
 
     const customer: Customer = {
@@ -96,6 +99,85 @@ export class LedgerService {
   }
 
   /**
+   * Updates an existing customer's contact and credit limit details.
+   */
+  async updateCustomer(customerId: string, input: UpdateCustomerInput): Promise<Customer> {
+    const existing = await db.customers.get(customerId);
+    if (!existing) throw new Error(`Customer not found: ${customerId}`);
+
+    const now = new Date().toISOString();
+    const updatedCustomer: Customer = {
+      ...existing,
+      nickname: input.nickname.trim(),
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      phoneNumber: (input.phoneNumber ?? existing.phoneNumber).trim(),
+      creditLimit: roundToCentavos(input.creditLimit ?? existing.creditLimit),
+      updatedAt: now,
+    };
+
+    const outboxEntry: OutboxEntry = {
+      id: generateUUID(),
+      action: 'UPDATE_CUSTOMER',
+      payload: {
+        customerId,
+        nickname: updatedCustomer.nickname,
+        firstName: updatedCustomer.firstName,
+        lastName: updatedCustomer.lastName,
+        phoneNumber: updatedCustomer.phoneNumber,
+        creditLimit: updatedCustomer.creditLimit,
+        updatedAt: now,
+      },
+      timestamp: Date.now(),
+      status: 'PENDING',
+      retryCount: 0,
+    };
+
+    await db.transaction('rw', [db.customers, db.syncOutbox], async () => {
+      await db.customers.put(updatedCustomer);
+      await db.syncOutbox.add(outboxEntry);
+    });
+
+    return updatedCustomer;
+  }
+
+  /**
+   * Soft-deletes / archives a customer only if their debt balance is exactly 0.
+   */
+  async archiveCustomer(customerId: string): Promise<void> {
+    const existing = await db.customers.get(customerId);
+    if (!existing) throw new Error(`Customer not found: ${customerId}`);
+
+    const balance = await this.getCustomerBalance(customerId);
+    if (balance !== 0) {
+      throw new Error(
+        `Hindi pwedeng burahin ang suki na may natitirang utang (₱${balance.toFixed(2)}). Kailangan munang ma-settle o maging ₱0.00.`
+      );
+    }
+
+    const now = new Date().toISOString();
+    const outboxEntry: OutboxEntry = {
+      id: generateUUID(),
+      action: 'ARCHIVE_CUSTOMER',
+      payload: {
+        customerId,
+        updatedAt: now,
+      },
+      timestamp: Date.now(),
+      status: 'PENDING',
+      retryCount: 0,
+    };
+
+    await db.transaction('rw', [db.customers, db.syncOutbox], async () => {
+      await db.customers.update(customerId, {
+        isActive: false,
+        updatedAt: now,
+      });
+      await db.syncOutbox.add(outboxEntry);
+    });
+  }
+
+  /**
    * Records a double-entry transaction (CREDIT_PURCHASE, PAYMENT, or ADJUSTMENT).
    * Enforces Debits = Credits and persists to outbox in one atomic write.
    */
@@ -117,7 +199,7 @@ export class LedgerService {
       throw new Error(`Account not found for customer: ${input.customerId}`);
     }
 
-    const transactionId = crypto.randomUUID();
+    const transactionId = generateUUID();
     const refNumber = `TXN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     const now = new Date().toISOString();
 
@@ -126,6 +208,7 @@ export class LedgerService {
       referenceNumber: refNumber,
       type: input.type,
       description: input.description,
+      dueDate: input.dueDate || undefined,
       createdAt: now,
     };
 
@@ -137,7 +220,7 @@ export class LedgerService {
 
       entries = [
         {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           transactionId,
           accountId: arAccount.id,
           amount,
@@ -145,7 +228,7 @@ export class LedgerService {
           createdAt: now,
         },
         {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           transactionId,
           accountId: salesAccount.id,
           amount,
@@ -159,7 +242,7 @@ export class LedgerService {
 
       entries = [
         {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           transactionId,
           accountId: cashAccount.id,
           amount,
@@ -167,7 +250,7 @@ export class LedgerService {
           createdAt: now,
         },
         {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           transactionId,
           accountId: arAccount.id,
           amount,
@@ -181,7 +264,7 @@ export class LedgerService {
 
       entries = [
         {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           transactionId,
           accountId: adjAccount.id,
           amount,
@@ -189,7 +272,7 @@ export class LedgerService {
           createdAt: now,
         },
         {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           transactionId,
           accountId: arAccount.id,
           amount,
@@ -212,33 +295,79 @@ export class LedgerService {
     }
 
     const items: TransactionItem[] = (input.items ?? []).map((it) => ({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       transactionId,
+      productId: it.productId,
       itemName: it.itemName,
       quantity: it.quantity,
       unitPrice: it.unitPrice,
       totalPrice: roundToCentavos(it.quantity * it.unitPrice),
     }));
 
+    let reminder: PaymentReminder | undefined;
+    if (input.type === 'CREDIT_PURCHASE' && input.dueDate) {
+      reminder = {
+        id: generateUUID(),
+        customerId: input.customerId,
+        transactionId,
+        dueDate: input.dueDate,
+        status: 'PENDING',
+        createdAt: now,
+      };
+    }
+
     const outboxEntry: OutboxEntry = {
       id: transactionId, // Idempotency key aligns with transaction UUID
       action: 'RECORD_TRANSACTION',
-      payload: { transaction, entries, items },
+      payload: { transaction, entries, items, reminder },
       timestamp: Date.now(),
       status: 'PENDING',
       retryCount: 0,
     };
 
-    await db.transaction('rw', [db.transactions, db.ledgerEntries, db.transactionItems, db.syncOutbox], async () => {
-      await db.transactions.add(transaction);
-      await db.ledgerEntries.bulkAdd(entries);
-      if (items.length > 0) {
-        await db.transactionItems.bulkAdd(items);
+    await db.transaction(
+      'rw',
+      [db.transactions, db.ledgerEntries, db.transactionItems, db.paymentReminders, db.products, db.syncOutbox],
+      async () => {
+        await db.transactions.add(transaction);
+        await db.ledgerEntries.bulkAdd(entries);
+        if (items.length > 0) {
+          await db.transactionItems.bulkAdd(items);
+          // Concurrently deduct inventory stock for purchased products
+          for (const it of items) {
+            if (it.productId) {
+              const prod = await db.products.get(it.productId);
+              if (prod) {
+                const newStock = Math.round((prod.currentStock - it.quantity) * 100) / 100;
+                await db.products.update(it.productId, {
+                  currentStock: newStock,
+                  updatedAt: now,
+                });
+              }
+            }
+          }
+        }
+        if (reminder) {
+          await db.paymentReminders.add(reminder);
+        }
+        await db.syncOutbox.add(outboxEntry);
       }
-      await db.syncOutbox.add(outboxEntry);
-    });
+    );
 
     const newBalance = await this.getCustomerBalance(input.customerId);
+
+    // If customer has fully paid their debt, settle all pending reminders
+    if (newBalance <= 0) {
+      await db.paymentReminders
+        .where('customerId')
+        .equals(input.customerId)
+        .modify((r) => {
+          if (r.status === 'PENDING') {
+            r.status = 'SETTLED';
+          }
+        });
+    }
+
     return { transaction, entries, newBalance };
   }
 

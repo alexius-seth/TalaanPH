@@ -1,5 +1,15 @@
 import { db } from './db';
-import type { Customer, Account, Transaction, LedgerEntry, TransactionItem, OutboxEntry } from './types';
+import type {
+  Customer,
+  Account,
+  Transaction,
+  LedgerEntry,
+  TransactionItem,
+  PaymentReminder,
+  Product,
+  ProductPackageUnit,
+  OutboxEntry,
+} from './types';
 
 export interface SyncState {
   isOnline: boolean;
@@ -23,6 +33,9 @@ export interface PullResponse {
   transactions: Transaction[];
   ledgerEntries: LedgerEntry[];
   transactionItems: TransactionItem[];
+  paymentReminders?: PaymentReminder[];
+  products?: Product[];
+  packageUnits?: ProductPackageUnit[];
 }
 
 export class SyncManager {
@@ -166,13 +179,26 @@ export class SyncManager {
 
     await db.transaction(
       'rw',
-      [db.customers, db.accounts, db.transactions, db.ledgerEntries, db.transactionItems, db.syncMeta],
+      [
+        db.customers,
+        db.accounts,
+        db.transactions,
+        db.ledgerEntries,
+        db.transactionItems,
+        db.paymentReminders,
+        db.products,
+        db.packageUnits,
+        db.syncMeta,
+      ],
       async () => {
         if (data.customers?.length) await db.customers.bulkPut(data.customers);
         if (data.accounts?.length) await db.accounts.bulkPut(data.accounts);
         if (data.transactions?.length) await db.transactions.bulkPut(data.transactions);
         if (data.ledgerEntries?.length) await db.ledgerEntries.bulkPut(data.ledgerEntries);
         if (data.transactionItems?.length) await db.transactionItems.bulkPut(data.transactionItems);
+        if (data.paymentReminders?.length) await db.paymentReminders.bulkPut(data.paymentReminders);
+        if (data.products?.length) await db.products.bulkPut(data.products);
+        if (data.packageUnits?.length) await db.packageUnits.bulkPut(data.packageUnits);
 
         await db.syncMeta.put({ key: 'last_pull_timestamp', value: data.timestamp });
       }

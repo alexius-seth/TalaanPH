@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { OutboxEntry } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as { batch: OutboxEntry[] };
@@ -13,13 +15,13 @@ export async function POST(req: Request) {
 
     const processedIds: string[] = [];
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // 1. Gather existing processed IDs in one query
       const existingEvents = await tx.processedSyncEvent.findMany({
         where: { id: { in: batch.map((b) => b.id) } },
         select: { id: true },
       });
-      const existingIdSet = new Set(existingEvents.map((e) => e.id));
+      const existingIdSet = new Set(existingEvents.map((e: { id: string }) => e.id));
 
       for (const entry of batch) {
         if (existingIdSet.has(entry.id)) {
@@ -90,6 +92,7 @@ export async function POST(req: Request) {
               referenceNumber: string;
               type: 'CREDIT_PURCHASE' | 'PAYMENT' | 'ADJUSTMENT';
               description?: string;
+              dueDate?: string;
               createdAt: string;
             };
             entries: Array<{
@@ -103,11 +106,20 @@ export async function POST(req: Request) {
             items?: Array<{
               id: string;
               transactionId: string;
+              productId?: string;
               itemName: string;
               quantity: number;
               unitPrice: number;
               totalPrice: number;
             }>;
+            reminder?: {
+              id: string;
+              customerId: string;
+              transactionId: string;
+              dueDate: string;
+              status: 'PENDING' | 'SETTLED' | 'REMINDED';
+              createdAt: string;
+            };
           };
 
           // Double-entry validation on server boundary
@@ -129,6 +141,7 @@ export async function POST(req: Request) {
               referenceNumber: payload.transaction.referenceNumber,
               type: payload.transaction.type,
               description: payload.transaction.description,
+              dueDate: payload.transaction.dueDate ? new Date(payload.transaction.dueDate) : undefined,
               createdAt: new Date(payload.transaction.createdAt),
             },
           });
@@ -151,6 +164,7 @@ export async function POST(req: Request) {
               data: payload.items.map((item) => ({
                 id: item.id,
                 transactionId: item.transactionId,
+                productId: item.productId,
                 itemName: item.itemName,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
@@ -158,6 +172,112 @@ export async function POST(req: Request) {
               })),
             });
           }
+
+          // Create reminder if present
+          if (payload.reminder) {
+            await tx.paymentReminder.upsert({
+              where: { id: payload.reminder.id },
+              update: {
+                status: payload.reminder.status,
+                dueDate: new Date(payload.reminder.dueDate),
+              },
+              create: {
+                id: payload.reminder.id,
+                customerId: payload.reminder.customerId,
+                transactionId: payload.reminder.transactionId,
+                dueDate: new Date(payload.reminder.dueDate),
+                status: payload.reminder.status || 'PENDING',
+                createdAt: new Date(payload.reminder.createdAt),
+              },
+            });
+          }
+        } else if (entry.action === 'CREATE_PRODUCT') {
+          const payload = entry.payload as any;
+          await tx.product.upsert({
+            where: { id: payload.product.id },
+            update: {
+              name: payload.product.name,
+              category: payload.product.category,
+              baseUnit: payload.product.baseUnit,
+              currentStock: payload.product.currentStock,
+              lowStockThreshold: payload.product.lowStockThreshold,
+              retailPrice: payload.product.retailPrice,
+            },
+            create: {
+              id: payload.product.id,
+              name: payload.product.name,
+              category: payload.product.category,
+              baseUnit: payload.product.baseUnit,
+              currentStock: payload.product.currentStock,
+              lowStockThreshold: payload.product.lowStockThreshold,
+              costPerBaseUnit: payload.product.costPerBaseUnit ?? 0,
+              retailPrice: payload.product.retailPrice,
+              createdAt: new Date(payload.product.createdAt),
+              updatedAt: new Date(payload.product.updatedAt),
+            },
+          });
+
+          if (payload.packageUnits && payload.packageUnits.length > 0) {
+            for (const pkg of payload.packageUnits) {
+              await tx.productPackageUnit.upsert({
+                where: { id: pkg.id },
+                update: {
+                  unitName: pkg.unitName,
+                  multiplier: pkg.multiplier,
+                  packageCost: pkg.packageCost,
+                },
+                create: {
+                  id: pkg.id,
+                  productId: pkg.productId,
+                  unitName: pkg.unitName,
+                  multiplier: pkg.multiplier,
+                  packageCost: pkg.packageCost,
+                },
+              });
+            }
+          }
+        } else if (entry.action === 'RESTOCK_PRODUCT') {
+          const payload = entry.payload as any;
+          await tx.product.update({
+            where: { id: payload.productId },
+            data: {
+              currentStock: payload.newStock,
+              updatedAt: new Date(payload.timestamp),
+            },
+          });
+        } else if (entry.action === 'UPDATE_CUSTOMER') {
+          const payload = entry.payload as {
+            customerId: string;
+            nickname: string;
+            firstName: string;
+            lastName: string;
+            phoneNumber: string;
+            creditLimit: number;
+            updatedAt: string;
+          };
+          await tx.customer.update({
+            where: { id: payload.customerId },
+            data: {
+              nickname: payload.nickname,
+              firstName: payload.firstName,
+              lastName: payload.lastName,
+              phoneNumber: payload.phoneNumber,
+              creditLimit: payload.creditLimit,
+              updatedAt: new Date(payload.updatedAt),
+            },
+          });
+        } else if (entry.action === 'ARCHIVE_CUSTOMER') {
+          const payload = entry.payload as {
+            customerId: string;
+            updatedAt: string;
+          };
+          await tx.customer.update({
+            where: { id: payload.customerId },
+            data: {
+              isActive: false,
+              updatedAt: new Date(payload.updatedAt),
+            },
+          });
         }
 
         // Mark processed for idempotency
