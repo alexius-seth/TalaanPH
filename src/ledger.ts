@@ -27,6 +27,11 @@ function roundToCentavos(val: number): number {
   return Math.round((val + Number.EPSILON) * 100) / 100;
 }
 
+/** Integer centavos: all ledger sums use these so float drift can never accumulate. */
+function toCents(val: number): number {
+  return Number.isFinite(val) ? Math.round((val + Number.EPSILON) * 100) : 0;
+}
+
 export class LedgerService {
   /**
    * Ensures system core accounts (CASH, SALES, ADJUSTMENT) exist in local DB.
@@ -66,7 +71,7 @@ export class LedgerService {
       lastName: input.lastName.trim(),
       nickname: input.nickname.trim(),
       phoneNumber: input.phoneNumber.trim(),
-      creditLimit: roundToCentavos(input.creditLimit ?? 0),
+      creditLimit: Math.max(0, toCents(input.creditLimit ?? 0) / 100),
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -112,7 +117,7 @@ export class LedgerService {
       firstName: input.firstName.trim(),
       lastName: input.lastName.trim(),
       phoneNumber: (input.phoneNumber ?? existing.phoneNumber).trim(),
-      creditLimit: roundToCentavos(input.creditLimit ?? existing.creditLimit),
+      creditLimit: Math.max(0, toCents(input.creditLimit ?? existing.creditLimit) / 100),
       updatedAt: now,
     };
 
@@ -188,9 +193,17 @@ export class LedgerService {
   }> {
     await this.ensureSystemAccounts();
 
+    if (!Number.isFinite(input.amount)) {
+      throw new Error('Transaction amount must be a valid number');
+    }
     const amount = roundToCentavos(input.amount);
     if (amount <= 0) {
       throw new Error('Transaction amount must be greater than zero');
+    }
+    for (const it of input.items ?? []) {
+      if (!Number.isFinite(it.quantity) || it.quantity <= 0 || !Number.isFinite(it.unitPrice) || it.unitPrice < 0) {
+        throw new Error(`Invalid quantity or price for item: ${it.itemName}`);
+      }
     }
 
     const customerArCode = getCustomerAccountCode(input.customerId);
@@ -282,16 +295,14 @@ export class LedgerService {
       ];
     }
 
-    // Verify double-entry constraint: sum(debits) === sum(credits)
-    const totalDebit = roundToCentavos(
-      entries.filter((e) => e.direction === 'DEBIT').reduce((acc, e) => acc + e.amount, 0)
-    );
-    const totalCredit = roundToCentavos(
-      entries.filter((e) => e.direction === 'CREDIT').reduce((acc, e) => acc + e.amount, 0)
+    // Verify double-entry constraint in integer centavos: sum(debits) - sum(credits) === 0
+    const netCents = entries.reduce(
+      (acc, e) => acc + (e.direction === 'DEBIT' ? toCents(e.amount) : -toCents(e.amount)),
+      0
     );
 
-    if (totalDebit !== totalCredit) {
-      throw new Error(`Double-entry balance check failed: Debits (${totalDebit}) !== Credits (${totalCredit})`);
+    if (netCents !== 0) {
+      throw new Error(`Double-entry balance check failed: net difference is ${netCents} centavos`);
     }
 
     const items: TransactionItem[] = (input.items ?? []).map((it) => ({
@@ -319,7 +330,7 @@ export class LedgerService {
     const outboxEntry: OutboxEntry = {
       id: transactionId, // Idempotency key aligns with transaction UUID
       action: 'RECORD_TRANSACTION',
-      payload: { transaction, entries, items, reminder },
+      payload: { transaction, entries, items, reminder, customerId: input.customerId },
       timestamp: Date.now(),
       status: 'PENDING',
       retryCount: 0,
@@ -333,12 +344,17 @@ export class LedgerService {
         await db.ledgerEntries.bulkAdd(entries);
         if (items.length > 0) {
           await db.transactionItems.bulkAdd(items);
-          // Concurrently deduct inventory stock for purchased products
+          // Deduct inventory atomically; refuse to oversell (aborts the whole Dexie transaction)
           for (const it of items) {
             if (it.productId) {
               const prod = await db.products.get(it.productId);
               if (prod) {
-                const newStock = Math.round((prod.currentStock - it.quantity) * 100) / 100;
+                if (prod.currentStock < it.quantity) {
+                  throw new Error(
+                    `Kulang ang stock ng ${prod.name}: ${prod.currentStock} ${prod.baseUnit} na lang (kailangan ${it.quantity}).`
+                  );
+                }
+                const newStock = Math.max(0, Math.round((prod.currentStock - it.quantity) * 100) / 100);
                 await db.products.update(it.productId, {
                   currentStock: newStock,
                   updatedAt: now,
@@ -381,15 +397,12 @@ export class LedgerService {
     if (!account) return 0;
 
     const entries = await db.ledgerEntries.where('accountId').equals(account.id).toArray();
-    let balance = 0;
+    // Integer-centavo accumulation: immune to float drift and NaN (non-finite amounts count as 0).
+    let balanceCents = 0;
     for (const entry of entries) {
-      if (entry.direction === 'DEBIT') {
-        balance += entry.amount;
-      } else {
-        balance -= entry.amount;
-      }
+      balanceCents += entry.direction === 'DEBIT' ? toCents(entry.amount) : -toCents(entry.amount);
     }
-    return roundToCentavos(balance);
+    return balanceCents / 100;
   }
 }
 

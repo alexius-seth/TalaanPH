@@ -8,6 +8,11 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const sinceParam = searchParams.get('since');
     const sinceDate = sinceParam ? new Date(sinceParam) : new Date(0);
+    if (Number.isNaN(sinceDate.getTime())) {
+      return NextResponse.json({ error: 'Invalid since parameter' }, { status: 400 });
+    }
+    // Snapshot BEFORE querying so rows committed mid-request are re-sent next pull, never lost.
+    const snapshotAt = new Date();
 
     const [
       customers,
@@ -104,7 +109,7 @@ export async function GET(req: Request) {
     }));
 
     return NextResponse.json({
-      timestamp: new Date().toISOString(),
+      timestamp: snapshotAt.toISOString(),
       customers: formattedCustomers,
       accounts: formattedAccounts,
       transactions: formattedTransactions,
@@ -116,9 +121,6 @@ export async function GET(req: Request) {
     });
   } catch (error: any) {
     console.error('[/api/sync/pull] Pull error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Sync pull failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Sync pull failed' }, { status: 500 });
   }
 }

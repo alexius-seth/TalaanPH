@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Phone, CreditCard, PlusCircle, MinusCircle, Clock, Receipt, AlertTriangle, Pencil } from 'lucide-react';
 import { db } from '../db';
 import { getCustomerAccountCode } from '../ledger';
+import { useLanguage } from '../i18n';
 import type { Customer, TransactionType } from '../types';
 
 interface CustomerDetailProps {
@@ -31,6 +32,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
   onOpenTransaction,
   onEditCustomer,
 }) => {
+  const { t } = useLanguage();
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -90,12 +92,12 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
           <div className="flex items-center gap-2.5">
             <h2 className="text-2xl font-black text-gray-900">{customer.nickname}</h2>
             <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-              Aktibo
+              {t('activeBadge')}
             </span>
             {onEditCustomer && (
               <button
                 onClick={() => onEditCustomer(customer)}
-                title="I-edit si Suki"
+                title={t('editSuki')}
                 className="p-1.5 text-gray-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg active:scale-95 transition"
               >
                 <Pencil className="w-4 h-4" />
@@ -113,7 +115,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             {customer.creditLimit > 0 && (
               <span className="flex items-center gap-1 font-medium">
                 <CreditCard className="w-3.5 h-3.5 text-gray-400" />
-                Limit: ₱{customer.creditLimit.toFixed(2)}
+                {t('limitLabel')} ₱{customer.creditLimit.toFixed(2)}
               </span>
             )}
           </div>
@@ -126,14 +128,14 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             className="flex items-center gap-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-sm rounded-xl shadow-xs transition"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>+ Bagong Utang</span>
+            <span>{t('addCredit')}</span>
           </button>
           <button
             onClick={() => onOpenTransaction('PAYMENT')}
             className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-sm rounded-xl shadow-xs transition"
           >
             <MinusCircle className="w-4 h-4" />
-            <span>Magbayad</span>
+            <span>{t('recordPayment')}</span>
           </button>
         </div>
       </div>
@@ -142,7 +144,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
-            Kasalukuyang Utang
+            {t('currentBalance')}
           </span>
           <span
             className={`text-3xl font-black mt-1 block ${
@@ -155,11 +157,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
 
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
           <div className="flex justify-between items-center text-xs font-semibold">
-            <span className="text-gray-500 uppercase tracking-wider">Credit Limit Status</span>
+            <span className="text-gray-500 uppercase tracking-wider">{t('creditLimitStatus')}</span>
             <span className="text-gray-700 font-bold">
               {customer.creditLimit > 0
                 ? `${limitPercentage}% (₱${balance.toFixed(0)} / ₱${customer.creditLimit.toFixed(0)})`
-                : 'Walang Limit'}
+                : t('noCreditLimit')}
             </span>
           </div>
           {customer.creditLimit > 0 ? (
@@ -179,12 +181,12 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
               {limitPercentage >= 100 && (
                 <div className="flex items-center gap-1 text-[11px] text-rose-600 font-semibold mt-1.5">
                   <AlertTriangle className="w-3 h-3" />
-                  <span>Abot o lampas na sa itinakdang limit</span>
+                  <span>{t('maxLimitReached')}</span>
                 </div>
               )}
             </div>
           ) : (
-            <span className="text-xs text-gray-400 mt-2">Maaaring mag-pautang nang walang limit.</span>
+            <span className="text-xs text-gray-400 mt-2">{t('noCreditLimit')}</span>
           )}
         </div>
       </div>
@@ -194,16 +196,16 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-gray-400" />
-            <h3 className="text-sm font-bold text-gray-800">Talaan ng mga Transaksyon</h3>
+            <h3 className="text-sm font-bold text-gray-800">{t('transactionHistory')}</h3>
           </div>
-          <span className="text-xs text-gray-400 font-medium">{timeline.length} transaksyon</span>
+          <span className="text-xs text-gray-400 font-medium">{timeline.length}</span>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8 text-xs text-gray-400">Kinukuha ang kasaysayan...</div>
+          <div className="text-center py-8 text-xs text-gray-400">{t('loadingCustomers')}</div>
         ) : timeline.length === 0 ? (
           <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl text-xs text-gray-400">
-            Wala pang naitatalang utang o bayad para kay {customer.nickname}.
+            {t('noTransactions')}
           </div>
         ) : (
           <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto pr-1">
@@ -218,7 +220,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                           : 'bg-emerald-100 text-emerald-700'
                       }`}
                     >
-                      {item.direction === 'DEBIT' ? 'UTANG' : 'BAYAD'}
+                      {item.direction === 'DEBIT' ? t('creditTag').toUpperCase() : t('paymentTag').toUpperCase()}
                     </span>
                     <span className="font-mono text-gray-400 text-[11px]">{item.referenceNumber}</span>
                   </div>

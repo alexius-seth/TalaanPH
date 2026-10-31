@@ -5,6 +5,7 @@ import { AlertCircle, Send, X, Check, Clock } from 'lucide-react';
 import { db } from '../db';
 import { ledgerService } from '../ledger';
 import { dispatchReminderSms, formatReminderText } from '../sms';
+import { useLanguage } from '../i18n';
 import type { Customer, PaymentReminder } from '../types';
 
 interface DueCustomerItem {
@@ -24,6 +25,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({
   refreshKey = 0,
   onReminderSent,
 }) => {
+  const { t, lang } = useLanguage();
   const [dueItems, setDueItems] = useState<DueCustomerItem[]>([]);
   const [isOpenDialog, setIsOpenDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<DueCustomerItem | null>(null);
@@ -88,6 +90,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({
       balance: activeTarget.balance,
       dueDate: activeTarget.reminder.dueDate,
       phoneNumber: activeTarget.customer.phoneNumber,
+      lang,
     });
 
     if (dispatched) {
@@ -107,14 +110,14 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({
         <div className="flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-amber-950 shrink-0" />
           <span>
-            ⚠️ {dueItems.length} suki ang dapat singilin ngayong araw ({new Date().toLocaleDateString('tl-PH', { month: 'short', day: 'numeric' })})
+            ⚠️ {t('dueTodayDesc', { count: dueItems.length })}
           </span>
         </div>
         <button
           onClick={() => setIsOpenDialog(true)}
           className="px-2.5 py-1 bg-amber-950 text-amber-100 hover:bg-black active:scale-95 text-[11px] font-extrabold rounded-lg transition"
         >
-          Tingnan / Singilin
+          {t('viewDue')}
         </button>
       </div>
 
@@ -125,7 +128,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({
             <div className="flex justify-between items-center border-b border-gray-100 pb-3">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-600" />
-                <h3 className="text-base font-bold text-gray-900">Mga Suking Dapat Singilin</h3>
+                <h3 className="text-base font-bold text-gray-900">{t('dueTodayTitle')}</h3>
               </div>
               <button
                 onClick={() => setIsOpenDialog(false)}
@@ -164,7 +167,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({
             {activeTarget && (
               <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-4 font-mono text-xs text-gray-800 space-y-2">
                 <div className="flex justify-between text-gray-500 text-[11px] pb-1 border-b border-amber-200">
-                  <span>Suki: {activeTarget.customer.firstName} ({activeTarget.customer.phoneNumber})</span>
+                  <span>{t('customerLabel')} {activeTarget.customer.firstName} ({activeTarget.customer.phoneNumber})</span>
                   <span>Due: {activeTarget.reminder.dueDate}</span>
                 </div>
                 <pre className="whitespace-pre-wrap font-sans text-xs text-gray-800 leading-relaxed">
@@ -173,6 +176,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({
                     nickname: activeTarget.customer.nickname,
                     balance: activeTarget.balance,
                     dueDate: activeTarget.reminder.dueDate,
+                    lang,
                   })}
                 </pre>
               </div>
@@ -184,14 +188,14 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-amber-600 hover:bg-amber-700 active:scale-98 text-white font-bold rounded-xl shadow-md transition text-sm"
               >
                 <Send className="w-4 h-4" />
-                <span>I-text ang Paalala (Libre via SIM)</span>
+                <span>{t('sendReminder')}</span>
               </button>
 
               <button
                 onClick={() => setIsOpenDialog(false)}
                 className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition"
               >
-                Isara
+                {t('doneClose')}
               </button>
             </div>
           </div>

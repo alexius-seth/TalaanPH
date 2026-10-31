@@ -127,6 +127,9 @@ export class InventoryService {
   ): Promise<Product> {
     const product = await db.products.get(productId);
     if (!product) throw new Error(`Product not found: ${productId}`);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      throw new Error('Restock quantity must be greater than zero');
+    }
 
     let addedStock = quantity;
     let unitLabel = product.baseUnit;

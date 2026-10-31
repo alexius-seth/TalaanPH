@@ -101,6 +101,10 @@ export class SyncManager {
     await this.notifyListeners();
 
     try {
+      // Recover items stranded in SYNCING by a closed tab / dropped connection mid-push.
+      // Safe: the in-memory isSyncing guard guarantees no push is in flight here, and the
+      // server is idempotent per outbox id, so re-sending can never duplicate data.
+      await db.syncOutbox.where('status').equals('SYNCING').modify({ status: 'PENDING' });
       await this.push();
       await this.pull();
       this.lastSyncedAt = Date.now();

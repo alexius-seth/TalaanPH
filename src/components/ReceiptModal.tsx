@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { MessageSquare, Check, X, AlertCircle } from 'lucide-react';
 import { dispatchReceiptSms, type ReceiptParams } from '../sms';
+import { useLanguage } from '../i18n';
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   onClose,
   receiptParams,
 }) => {
+  const { t, lang } = useLanguage();
   const [isSending, setIsSending] = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
 
@@ -23,7 +25,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   const handleSendSms = async () => {
     setIsSending(true);
     try {
-      const dispatched = await dispatchReceiptSms(receiptParams);
+      const dispatched = await dispatchReceiptSms({ ...receiptParams, lang });
       if (dispatched) setSentSuccess(true);
     } catch (err) {
       console.error('Failed to trigger SMS', err);
@@ -36,7 +38,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 animate-in fade-in duration-200">
       <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-gray-900">Resibo ng Transaksyon</h3>
+          <h3 className="text-lg font-bold text-gray-900">{t('receiptTitle')}</h3>
           <button
             onClick={onClose}
             className="p-1 rounded-full text-gray-400 hover:text-gray-600 active:scale-95"
@@ -51,26 +53,26 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             [Talaan - {receiptParams.storeName}]
           </p>
           <div className="flex justify-between">
-            <span className="text-gray-500">Suki:</span>
+            <span className="text-gray-500">{t('customerLabel')}</span>
             <span className="font-semibold">{receiptParams.nickname}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Ref:</span>
+            <span className="text-gray-500">{t('refNumberLabel')}</span>
             <span>{receiptParams.refNumber}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Uri:</span>
+            <span className="text-gray-500">{lang === 'en' ? 'Type:' : 'Uri:'}</span>
             <span className="font-semibold">{receiptParams.type}</span>
           </div>
           <div className="flex justify-between text-sm pt-1 border-t border-dashed border-amber-300">
-            <span>Halaga:</span>
+            <span>{lang === 'en' ? 'Amount:' : 'Halaga:'}</span>
             <span className="font-bold">₱{receiptParams.amount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm font-bold text-amber-950 pt-1">
-            <span>Kabuuang Utang:</span>
+            <span>{t('totalBalance')}</span>
             <span>₱{receiptParams.balance.toFixed(2)}</span>
           </div>
-          <p className="text-center text-gray-500 pt-2 italic">Salamat po!</p>
+          <p className="text-center text-gray-500 pt-2 italic">{t('thankYou')}</p>
         </div>
 
         <div className="space-y-3">
@@ -82,12 +84,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             {sentSuccess ? (
               <>
                 <Check className="w-5 h-5" />
-                <span>Napadala / Nabuksan ang SMS</span>
+                <span>{lang === 'en' ? 'SMS Opened / Sent' : 'Napadala / Nabuksan ang SMS'}</span>
               </>
             ) : (
               <>
                 <MessageSquare className="w-5 h-5" />
-                <span>I-text ang Resibo (Libre via SIM)</span>
+                <span>{t('sendSms')}</span>
               </>
             )}
           </button>
@@ -96,7 +98,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             onClick={onClose}
             className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl active:scale-98 transition text-sm"
           >
-            Tapos Na / Isara
+            {t('doneClose')}
           </button>
         </div>
       </div>

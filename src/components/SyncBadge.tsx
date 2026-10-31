@@ -3,8 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { syncManager, type SyncState } from '../sync';
+import { useLanguage } from '../i18n';
 
 export const SyncBadge: React.FC = () => {
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>({
     isOnline: true,
@@ -53,17 +55,17 @@ export const SyncBadge: React.FC = () => {
       {!syncState.isOnline ? (
         <>
           <WifiOff className="w-3.5 h-3.5" />
-          <span>Offline</span>
+          <span>{t('offline')}</span>
         </>
       ) : syncState.isSyncing ? (
         <>
           <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-          <span>Syncing...</span>
+          <span>{t('syncing')}</span>
         </>
       ) : (
         <>
           <Wifi className="w-3.5 h-3.5" />
-          <span>Online</span>
+          <span>{t('online')}</span>
         </>
       )}
 

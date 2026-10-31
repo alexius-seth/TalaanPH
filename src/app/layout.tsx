@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { LanguageProvider } from '../i18n';
 
 export const metadata: Metadata = {
   title: 'Talaan - Tindahan Ledger',
@@ -29,25 +30,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="tl">
+    <html lang="tl" translate="no" className="notranslate" suppressHydrationWarning>
       <head>
+        <meta name="google" content="notranslate" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body className="antialiased bg-slate-50 select-none">
-        {children}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator && window.location.protocol === 'https:' || window.location.hostname === 'localhost') {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
-                    console.warn('[PWA] Service worker registration failed:', err);
+      <body className="antialiased bg-slate-50 select-none notranslate" suppressHydrationWarning>
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
+        {process.env.NODE_ENV === 'production' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                      console.warn('[PWA] Service worker registration failed:', err);
+                    });
                   });
-                });
-              }
-            `,
-          }}
-        />
+                }
+              `,
+            }}
+          />
+        )}
       </body>
     </html>
   );

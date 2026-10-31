@@ -2,10 +2,11 @@ export interface ReceiptParams {
   storeName: string;
   nickname: string;
   refNumber: string;
-  type: 'Utang' | 'Bayad' | 'Adjustment';
+  type: string;
   amount: number;
   balance: number;
   phoneNumber?: string;
+  lang?: 'tl' | 'en';
 }
 
 export interface ReminderParams {
@@ -14,6 +15,7 @@ export interface ReminderParams {
   balance: number;
   dueDate: string;
   phoneNumber?: string;
+  lang?: 'tl' | 'en';
 }
 
 /**
@@ -24,17 +26,31 @@ export function formatReceiptText(params: ReceiptParams): string {
   const cleanNick = params.nickname.trim().slice(0, 18);
   const amountStr = params.amount.toFixed(2);
   const balanceStr = params.balance.toFixed(2);
+  const isEn = params.lang === 'en';
 
-  const receipt = [
+  const typeLabel = isEn
+    ? params.type === 'Utang' ? 'Credit' : params.type === 'Bayad' ? 'Payment' : params.type
+    : params.type;
+
+  if (isEn) {
+    return [
+      `[Talaan - ${cleanStore}]`,
+      `Customer: ${cleanNick}`,
+      `Ref: ${params.refNumber}`,
+      `${typeLabel}: P${amountStr}`,
+      `Total Balance: P${balanceStr}`,
+      'Thank you!',
+    ].join('\n');
+  }
+
+  return [
     `[Talaan - ${cleanStore}]`,
     `Suki: ${cleanNick}`,
     `Ref: ${params.refNumber}`,
-    `${params.type}: P${amountStr}`,
+    `${typeLabel}: P${amountStr}`,
     `Kabuuang Utang: P${balanceStr}`,
     'Salamat po!',
   ].join('\n');
-
-  return receipt;
 }
 
 /**
@@ -44,6 +60,16 @@ export function formatReminderText(params: ReminderParams): string {
   const cleanStore = params.storeName.trim().slice(0, 18);
   const cleanNick = params.nickname.trim().slice(0, 16);
   const balanceStr = params.balance.toFixed(2);
+  const isEn = params.lang === 'en';
+
+  if (isEn) {
+    return [
+      `[Talaan - ${cleanStore}]`,
+      `Reminder for customer ${cleanNick}:`,
+      `Payment of P${balanceStr} is due today (${params.dueDate}).`,
+      'Please settle at the store. Thank you!',
+    ].join('\n');
+  }
 
   return [
     `[Talaan - ${cleanStore}]`,

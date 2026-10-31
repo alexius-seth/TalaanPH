@@ -1,15 +1,23 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { formatReminderText } from '@/sms';
 
 export const dynamic = 'force-dynamic';
 
+function isAuthorized(req: Request): boolean {
+  const cronSecret = process.env.CRON_SECRET;
+  // Fail closed in production: a missing secret must never open the endpoint.
+  if (!cronSecret) return process.env.NODE_ENV !== 'production';
+  const expected = Buffer.from(`Bearer ${cronSecret}`);
+  const received = Buffer.from(req.headers.get('authorization') ?? '');
+  return received.length === expected.length && timingSafeEqual(received, expected);
+}
+
 export async function GET(req: Request) {
   try {
-    // 1. Security Check: verify CRON_SECRET if set in environment
-    const authHeader = req.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // 1. Security Check: enforce CRON_SECRET bearer token (Vercel Cron sends it automatically)
+    if (!isAuthorized(req)) {
       return NextResponse.json({ error: 'Unauthorized cron trigger' }, { status: 401 });
     }
 
@@ -44,12 +52,14 @@ export async function GET(req: Request) {
         a.code.startsWith('ASSET:AR:')
       );
 
-      let balance = 0;
+      let balanceCents = 0;
       if (arAccount && arAccount.entries) {
         for (const entry of arAccount.entries) {
-          balance += entry.direction === 'DEBIT' ? Number(entry.amount) : -Number(entry.amount);
+          const cents = Math.round((Number(entry.amount) + Number.EPSILON) * 100);
+          balanceCents += entry.direction === 'DEBIT' ? cents : -cents;
         }
       }
+      const balance = balanceCents / 100;
 
       // If already settled, mark settled and continue
       if (balance <= 0) {
@@ -69,8 +79,19 @@ export async function GET(req: Request) {
         dueDate: formattedDueDate,
       });
 
-      // Dispatch via Semaphore API if API key is configured
-      if (semaphoreApiKey) {
+      // Never mark REMINDED unless an SMS was really dispatched.
+      if (!semaphoreApiKey) {
+        results.push({
+          id: rem.id,
+          phone: rem.customer.phoneNumber,
+          status: 'SKIPPED',
+          error: 'SEMAPHORE_API_KEY not configured',
+        });
+        continue;
+      }
+
+      // Dispatch via Semaphore API
+      {
         try {
           const semResponse = await fetch('https://api.semaphore.co/api/v4/messages', {
             method: 'POST',
@@ -119,10 +140,7 @@ export async function GET(req: Request) {
     });
   } catch (error: any) {
     console.error('[/api/cron/reminders] Cron job failure:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Cron execution failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Cron execution failed' }, { status: 500 });
   }
 }
 

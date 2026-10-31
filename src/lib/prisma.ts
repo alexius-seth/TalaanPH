@@ -8,7 +8,6 @@ export const prisma =
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
   });
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
-}
-
+// Cache on globalThis in every environment: reuses one client per warm serverless instance
+// (and across HMR in dev) so Vercel + Neon connections are not exhausted.
+globalForPrisma.prisma = prisma;

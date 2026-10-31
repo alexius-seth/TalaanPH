@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Package, Plus, AlertTriangle, ArrowUpDown, Layers, Check } from 'lucide-react';
 import { inventoryService } from '../inventory';
+import { useLanguage } from '../i18n';
 import type { Product, ProductPackageUnit } from '../types';
 
 interface InventoryModalProps {
@@ -16,6 +17,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
   onClose,
   onInventoryChanged,
 }) => {
+  const { t, lang } = useLanguage();
   const [products, setProducts] = useState<Array<Product & { packageUnits: ProductPackageUnit[] }>>([]);
   const [activeTab, setActiveTab] = useState<'LIST' | 'RESTOCK' | 'NEW'>('LIST');
 
@@ -101,7 +103,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
     try {
       await inventoryService.createProduct({
         name: newName,
-        category: newCategory || 'Tingi',
+        category: newCategory || 'Iba pa',
         baseUnit: newBaseUnit,
         initialStock: parseFloat(newInitialStock) || 0,
         retailPrice: price,
@@ -139,7 +141,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
         <div className="flex justify-between items-center pb-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-emerald-600" />
-            <h3 className="text-lg font-bold text-gray-900">Pamamahala ng Paninda (Tingi)</h3>
+            <h3 className="text-lg font-bold text-gray-900">{t('inventoryTitle')}</h3>
           </div>
           <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
@@ -154,7 +156,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
               activeTab === 'LIST' ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-600'
             }`}
           >
-            Listahan ({products.length})
+            {t('productListTab')} ({products.length})
           </button>
           <button
             onClick={() => setActiveTab('RESTOCK')}
@@ -162,7 +164,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
               activeTab === 'RESTOCK' ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-600'
             }`}
           >
-            + Mag-Restock
+            {t('restockTab')}
           </button>
           <button
             onClick={() => setActiveTab('NEW')}
@@ -170,7 +172,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
               activeTab === 'NEW' ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-600'
             }`}
           >
-            + Bagong Produkto
+            {t('addProductTab')}
           </button>
         </div>
 
@@ -192,12 +194,12 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                       </span>
                       {isOut ? (
                         <span className="text-[10px] bg-red-100 text-red-700 font-extrabold px-1.5 py-0.2 rounded">
-                          UBOS NA
+                          {t('outOfStock').toUpperCase()}
                         </span>
                       ) : isLow ? (
                         <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded flex items-center gap-0.5">
                           <AlertTriangle className="w-2.5 h-2.5" />
-                          Kakaunti na
+                          {t('lowStockBadge')}
                         </span>
                       ) : null}
                     </div>
@@ -269,7 +271,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                           : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      <span className="text-xs block">Tingi / Bawat Piraso</span>
+                      <span className="text-xs block">Bawat Piraso</span>
                       <span className="text-[11px] text-gray-400">1 {currentRestockProd.baseUnit}</span>
                     </button>
 
@@ -372,7 +374,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Base Unit (Tingi)</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Base Unit</label>
                 <input
                   type="text"
                   value={newBaseUnit}
@@ -385,7 +387,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Tingi Price (₱) *</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Presyo / Retail Price (₱) *</label>
                 <input
                   type="number"
                   step="0.01"
@@ -433,7 +435,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-gray-500 mb-0.5">Ilang tingi sa loob? (Multiplier)</label>
+                    <label className="block text-[11px] text-gray-500 mb-0.5">Ilang piraso sa loob? (Multiplier)</label>
                     <input
                       type="number"
                       value={pkgMultiplier}

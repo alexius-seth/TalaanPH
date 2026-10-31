@@ -11,10 +11,13 @@ import { EditCustomerModal } from '../components/EditCustomerModal';
 import { TransactionModal } from '../components/TransactionModal';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { InventoryModal } from '../components/InventoryModal';
+import { checkStorage } from '../db';
+import { useLanguage, LanguageToggle } from '../i18n';
 import type { Customer, TransactionType } from '../types';
 import type { ReceiptParams } from '../sms';
 
 export default function TalaanDashboard() {
+  const { t, lang } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [storeName, setStoreName] = useState('Sari-Sari Store');
   const [isEditingStore, setIsEditingStore] = useState(false);
@@ -35,9 +38,11 @@ export default function TalaanDashboard() {
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptParams | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [storageIssue, setStorageIssue] = useState<'unavailable' | 'quota' | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    void checkStorage().then(setStorageIssue);
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('talaan_store_name');
       if (saved) setStoreName(saved);
@@ -152,7 +157,7 @@ export default function TalaanDashboard() {
                       onClick={() => setIsEditingStore(true)}
                       className="flex items-center gap-1 text-xs text-emerald-100 hover:text-white font-medium transition"
                     >
-                      <span>{storeName}</span>
+                      <span suppressHydrationWarning>{storeName}</span>
                       <Edit3 className="w-3 h-3 text-emerald-200" />
                     </button>
                   )}
@@ -164,10 +169,11 @@ export default function TalaanDashboard() {
                 <button
                   onClick={() => setIsInventoryOpen(true)}
                   className="p-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg active:scale-95 transition"
-                  title="Paninda (Tingi)"
+                  title={t('inventoryBtn')}
                 >
                   <Package className="w-4 h-4 text-emerald-200" />
                 </button>
+                <LanguageToggle />
                 <SyncBadge />
               </div>
             </div>
@@ -178,8 +184,8 @@ export default function TalaanDashboard() {
                 <div className="flex items-center gap-1.5">
                   <DollarSign className="w-3.5 h-3.5 text-emerald-200" />
                   <div>
-                    <span className="text-emerald-200 text-[10px] block leading-none">Kabuuang Utang</span>
-                    <span className="font-extrabold text-sm text-white">
+                    <span className="text-emerald-200 text-[10px] block leading-none">{t('totalReceivables')}</span>
+                    <span className="font-extrabold text-sm text-white" suppressHydrationWarning>
                       ₱{mounted ? totalReceivables.toFixed(2) : '0.00'}
                     </span>
                   </div>
@@ -188,8 +194,8 @@ export default function TalaanDashboard() {
                 <div className="flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-emerald-200" />
                   <div>
-                    <span className="text-emerald-200 text-[10px] block leading-none">Aktibong Suki</span>
-                    <span className="font-extrabold text-sm text-white">
+                    <span className="text-emerald-200 text-[10px] block leading-none">{t('activeCustomers')}</span>
+                    <span className="font-extrabold text-sm text-white" suppressHydrationWarning>
                       {mounted ? activeCustomerCount : 0}
                     </span>
                   </div>
@@ -200,17 +206,24 @@ export default function TalaanDashboard() {
                 <button
                   onClick={() => setIsInventoryOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700/80 hover:bg-emerald-800 text-white active:scale-95 text-xs font-bold rounded-full border border-emerald-500/50 shadow-xs transition"
-                  title="Pamahalaan ang Paninda / Tingi Inventory"
+                  title={t('inventoryBtn')}
                 >
                   <Package className="w-3.5 h-3.5 text-emerald-200" />
-                  <span>Paninda (Tingi)</span>
+                  <span>{t('inventoryBtn')}</span>
                 </button>
+                <LanguageToggle />
                 <SyncBadge />
               </div>
             </div>
           </div>
         </div>
       </header>
+
+      {storageIssue && (
+        <div role="alert" className="bg-red-600 text-white text-xs font-semibold px-4 py-2 text-center">
+          {t(storageIssue === 'quota' ? 'storageQuota' : 'storageUnavailable')}
+        </div>
+      )}
 
       {/* Due Today / Overdue Alert Banner */}
       <DueTodayBanner
@@ -249,16 +262,15 @@ export default function TalaanDashboard() {
                 <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                   <UserCheck className="w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-800">Pumili ng Suki</h3>
+                <h3 className="text-lg font-bold text-gray-800">{t('selectCustomerPrompt')}</h3>
                 <p className="text-xs text-gray-500 max-w-sm">
-                  Piliin ang isang suki mula sa kaliwa upang matingnan ang buong talaan ng utang,
-                  mga nakaraang bayad, o magtala ng bagong transaksyon.
+                  {t('selectCustomerSub')}
                 </p>
                 <button
                   onClick={() => setIsAddCustomerOpen(true)}
                   className="mt-2 inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition"
                 >
-                  <span>+ Maglista ng Bagong Suki</span>
+                  <span>{t('registerNewCustomer')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, PlusCircle, MinusCircle, AlertTriangle, Calendar, Package, ShoppingBag, Plus, Minus } from 'lucide-react';
 import { ledgerService } from '../ledger';
 import { inventoryService } from '../inventory';
+import { useLanguage } from '../i18n';
 import type { Customer, TransactionType, Product, LineItemInput } from '../types';
 import type { ReceiptParams } from '../sms';
 
@@ -55,6 +56,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t, lang } = useLanguage();
   const [txnType, setTxnType] = useState<TransactionType>(initialType);
   const [amountStr, setAmountStr] = useState('');
   const [description, setDescription] = useState('');
@@ -164,10 +166,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         storeName,
         nickname: customer.nickname,
         refNumber: result.transaction.referenceNumber,
-        type: txnType === 'CREDIT_PURCHASE' ? 'Utang' : 'Bayad',
+        type: txnType === 'CREDIT_PURCHASE' ? (lang === 'en' ? 'Credit' : 'Utang') : (lang === 'en' ? 'Payment' : 'Bayad'),
         amount: numericAmount,
         balance: result.newBalance,
         phoneNumber: customer.phoneNumber,
+        lang,
       });
       onClose();
     } catch (err: any) {
@@ -205,7 +208,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             }`}
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Bagong Utang</span>
+            <span>{t('newCredit')}</span>
           </button>
           <button
             type="button"
@@ -218,18 +221,18 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             }`}
           >
             <MinusCircle className="w-4 h-4" />
-            <span>Bayad</span>
+            <span>{t('payment')}</span>
           </button>
         </div>
 
         {/* Live balance indicator */}
         <div className="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-200 flex justify-between items-center text-sm">
           <div>
-            <span className="text-gray-500 text-xs block">Kasalukuyan:</span>
+            <span className="text-gray-500 text-xs block">{t('current')}</span>
             <span className="font-semibold text-gray-800">₱{currentBalance.toFixed(2)}</span>
           </div>
           <div className="text-right">
-            <span className="text-gray-500 text-xs block">Bagong Balanse:</span>
+            <span className="text-gray-500 text-xs block">{t('newBalance')}</span>
             <span
               className={`font-bold ${
                 txnType === 'CREDIT_PURCHASE' ? 'text-rose-600' : 'text-emerald-700'
@@ -253,7 +256,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-1 text-xs font-bold text-gray-700">
                 <ShoppingBag className="w-3.5 h-3.5 text-rose-600" />
-                <span>Pumili ng Paninda (Tingi Inventory)</span>
+                <span>{t('selectInventoryItems')}</span>
               </label>
               {cart.length > 0 && (
                 <button
@@ -265,7 +268,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   }}
                   className="text-[11px] text-rose-600 font-semibold hover:underline"
                 >
-                  I-clear
+                  {lang === 'en' ? 'Clear' : 'I-clear'}
                 </button>
               )}
             </div>
@@ -311,7 +314,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                           isOutOfStock ? 'text-red-500' : isLowStock ? 'text-amber-600' : 'text-gray-400'
                         }`}
                       >
-                        {isOutOfStock ? 'Out' : `${prod.currentStock} ${prod.baseUnit}`}
+                        {isOutOfStock ? t('outOfStock') : `${prod.currentStock} ${prod.baseUnit}`}
                       </span>
                     </div>
                   </button>
@@ -322,7 +325,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             {/* Selected Cart Items Breakdown */}
             {cart.length > 0 && (
               <div className="bg-rose-50/40 border border-rose-200 rounded-xl p-2.5 space-y-1.5">
-                <span className="text-[11px] font-bold text-gray-700 block">Kinuha:</span>
+                <span className="text-[11px] font-bold text-gray-700 block">{t('cartSummary')}</span>
                 {cart.map((item) => (
                   <div key={item.product.id} className="flex items-center justify-between text-xs">
                     <span className="text-gray-700 font-medium">{item.product.name}</span>
@@ -359,7 +362,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">
-              Kabuuang Halaga (₱)
+              {t('amount')}
             </label>
             <input
               type="number"
@@ -376,7 +379,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           {/* Bayad Quick Presets */}
           {txnType === 'PAYMENT' && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Mabilisang bayad:</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">{t('quickAmounts')}</label>
               <div className="flex flex-wrap gap-1.5">
                 {[50, 100, 200, 500].map((amt) => (
                   <button
@@ -394,7 +397,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     onClick={() => setAmountStr(currentBalance.toFixed(2))}
                     className="px-3 py-1.5 bg-emerald-700 text-white active:scale-95 text-xs font-bold rounded-lg transition"
                   >
-                    Buo (₱{currentBalance.toFixed(2)})
+                    {t('fullPayment')} (₱{currentBalance.toFixed(2)})
                   </button>
                 )}
               </div>
@@ -406,7 +409,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-3 space-y-2">
               <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700">
                 <Calendar className="w-3.5 h-3.5 text-rose-600" />
-                <span>Kailan Magbabayad? (Due Date)</span>
+                <span>{t('dueDatePrompt')}</span>
               </label>
               <input
                 type="date"
@@ -420,21 +423,21 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   onClick={() => setDueDate(getNextFriday())}
                   className="px-2 py-1 bg-white hover:bg-rose-100 border border-rose-200 text-rose-800 rounded-md text-[11px] font-medium transition"
                 >
-                  📅 Sa Biyernes
+                  📅 {t('nextFriday')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDueDate(getKatapusan())}
                   className="px-2 py-1 bg-white hover:bg-rose-100 border border-rose-200 text-rose-800 rounded-md text-[11px] font-medium transition"
                 >
-                  📅 Katapusan
+                  📅 {t('endOfMonth')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDueDate(getOneWeekLater())}
                   className="px-2 py-1 bg-white hover:bg-rose-100 border border-rose-200 text-rose-800 rounded-md text-[11px] font-medium transition"
                 >
-                  📅 1 Linggo
+                  📅 {t('oneWeek')}
                 </button>
               </div>
             </div>
@@ -442,13 +445,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              Deskripsyon / Tala (Opsyonal)
+              {t('descriptionPlaceholder')}
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="hal. 2 kape, 1 bigas"
+              placeholder={lang === 'en' ? 'e.g. 2 coffee, 1 rice' : 'hal. 2 kape, 1 bigas'}
               className="w-full py-2.5 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             />
           </div>
@@ -464,7 +467,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                 : 'bg-emerald-600 hover:bg-emerald-700'
             }`}
           >
-            {isSubmitting ? 'Itinatala...' : 'Itala ang Transaksyon'}
+            {isSubmitting ? t('recordingTxn') : t('recordTxnBtn')}
           </button>
         </form>
       </div>

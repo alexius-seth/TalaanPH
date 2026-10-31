@@ -51,3 +51,17 @@ export class TalaanDatabase extends Dexie {
 }
 
 export const db = new TalaanDatabase();
+
+/**
+ * Opens IndexedDB and reports why it is unusable (private-browsing, blocked storage, quota)
+ * so the UI can warn the user instead of crashing. Returns null when storage is healthy.
+ */
+export async function checkStorage(): Promise<'unavailable' | 'quota' | null> {
+  try {
+    if (typeof indexedDB === 'undefined') return 'unavailable';
+    await db.open();
+    return null;
+  } catch (err: any) {
+    return err?.name === 'QuotaExceededError' ? 'quota' : 'unavailable';
+  }
+}
