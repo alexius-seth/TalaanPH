@@ -84,6 +84,7 @@ export class InventoryService {
       lowStockThreshold: Number(input.lowStockThreshold ?? 5),
       costPerBaseUnit: Number(input.costPerBaseUnit ?? 0),
       retailPrice: Number(input.retailPrice),
+      isActive: true,
       createdAt: now,
       updatedAt: now,
     };
@@ -195,12 +196,39 @@ export class InventoryService {
   }
 
   /**
-   * Retrieves products along with their package units.
+   * Soft-deletes a product by setting isActive = false and queues ARCHIVE_PRODUCT in sync outbox.
+   */
+  async archiveProduct(productId: string): Promise<void> {
+    const product = await db.products.get(productId);
+    if (!product) throw new Error(`Product not found: ${productId}`);
+
+    const now = new Date().toISOString();
+    const outboxEntry: OutboxEntry = {
+      id: generateUUID(),
+      action: 'ARCHIVE_PRODUCT',
+      payload: { productId, updatedAt: now },
+      timestamp: Date.now(),
+      status: 'PENDING',
+      retryCount: 0,
+    };
+
+    await db.transaction('rw', [db.products, db.syncOutbox], async () => {
+      await db.products.update(productId, {
+        isActive: false,
+        updatedAt: now,
+      });
+      await db.syncOutbox.add(outboxEntry);
+    });
+  }
+
+  /**
+   * Retrieves active products along with their package units.
    */
   async getAllProducts(): Promise<Array<Product & { packageUnits: ProductPackageUnit[] }>> {
     const products = await db.products.toArray();
+    const activeProducts = products.filter((p) => p.isActive !== false);
     const result = await Promise.all(
-      products.map(async (p) => {
+      activeProducts.map(async (p) => {
         const packageUnits = await db.packageUnits.where('productId').equals(p.id).toArray();
         return { ...p, packageUnits };
       })

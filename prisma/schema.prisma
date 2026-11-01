@@ -141,6 +141,7 @@ model Product {
   lowStockThreshold Decimal              @default(5.00) @map("low_stock_threshold") @db.Decimal(10, 2)
   costPerBaseUnit   Decimal              @default(0.00) @map("cost_per_base_unit") @db.Decimal(12, 2)
   retailPrice       Decimal              @map("retail_price") @db.Decimal(12, 2)
+  isActive          Boolean              @default(true) @map("is_active")
   createdAt         DateTime             @default(now()) @map("created_at")
   updatedAt         DateTime             @updatedAt @map("updated_at")
 
@@ -170,4 +171,13 @@ model ProcessedSyncEvent {
   processedAt DateTime  @default(now()) @map("processed_at")
 
   @@map("processed_sync_events")
+}
+
+model StoreSetting {
+  id        String   @id @default("default_store")
+  storeName String   @default("Talaan Store") @map("store_name")
+  pinHash   String   @map("pin_hash")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("store_settings")
 }

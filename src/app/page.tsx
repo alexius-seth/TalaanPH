@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Store, Edit3, Users, DollarSign, ArrowRight, UserCheck, Package } from 'lucide-react';
+import { Store, Edit3, Users, DollarSign, ArrowRight, UserCheck, Package, Settings, Lock } from 'lucide-react';
 import { SyncBadge } from '../components/SyncBadge';
 import { CustomerList, type CustomerWithBalance } from '../components/CustomerList';
 import { DueTodayBanner } from '../components/DueTodayBanner';
@@ -11,7 +11,10 @@ import { EditCustomerModal } from '../components/EditCustomerModal';
 import { TransactionModal } from '../components/TransactionModal';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { InventoryModal } from '../components/InventoryModal';
+import { SettingsModal } from '../components/SettingsModal';
+import { PinLockScreen } from '../components/PinLockScreen';
 import { checkStorage } from '../db';
+import { getStoreSettings } from '../settings';
 import { useLanguage, LanguageToggle } from '../i18n';
 import type { Customer, TransactionType } from '../types';
 import type { ReceiptParams } from '../sms';
@@ -19,8 +22,9 @@ import type { ReceiptParams } from '../sms';
 export default function TalaanDashboard() {
   const { t, lang } = useLanguage();
   const [mounted, setMounted] = useState(false);
-  const [storeName, setStoreName] = useState('Sari-Sari Store');
-  const [isEditingStore, setIsEditingStore] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [storeName, setStoreName] = useState('Talaan Store');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Metrics
@@ -42,20 +46,28 @@ export default function TalaanDashboard() {
 
   useEffect(() => {
     setMounted(true);
-    void checkStorage().then(setStorageIssue);
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('talaan_store_name');
-      if (saved) setStoreName(saved);
+      const unlocked = sessionStorage.getItem('talaan_session_unlocked') === 'true';
+      setIsUnlocked(unlocked);
     }
+    void checkStorage().then(setStorageIssue);
+    void getStoreSettings().then((s) => {
+      if (s?.storeName) setStoreName(s.storeName);
+    });
   }, []);
 
-  const handleSaveStoreName = (name: string) => {
-    const clean = name.trim() || 'Sari-Sari Store';
-    setStoreName(clean);
-    setIsEditingStore(false);
+  const handleUnlock = () => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('talaan_store_name', clean);
+      sessionStorage.setItem('talaan_session_unlocked', 'true');
     }
+    setIsUnlocked(true);
+  };
+
+  const handleLock = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('talaan_session_unlocked');
+    }
+    setIsUnlocked(false);
   };
 
   const handleCustomersLoaded = (customers: CustomerWithBalance[]) => {
@@ -120,8 +132,30 @@ export default function TalaanDashboard() {
     setRefreshKey((k: number) => k + 1);
   };
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-700 flex items-center justify-center text-white shadow-md">
+            <Store className="w-6 h-6 text-white" />
+          </div>
+          <span className="text-emerald-800 font-black text-sm tracking-widest">TALAAN</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isUnlocked) {
+    return (
+      <PinLockScreen
+        storeName={storeName}
+        onUnlocked={handleUnlock}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans" suppressHydrationWarning>
       {/* Top Header / App Bar */}
       <header className="sticky top-0 z-40 bg-emerald-600 text-white shadow-md">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -139,28 +173,14 @@ export default function TalaanDashboard() {
                       PWA
                     </span>
                   </div>
-                  {isEditingStore ? (
-                    <input
-                      type="text"
-                      autoFocus
-                      defaultValue={storeName}
-                      onBlur={(e: React.FocusEvent<HTMLInputElement>) =>
-                        handleSaveStoreName(e.target.value)
-                      }
-                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                        e.key === 'Enter' && handleSaveStoreName(e.currentTarget.value)
-                      }
-                      className="text-xs bg-emerald-700 text-white placeholder-emerald-200 rounded px-1.5 py-0.5 outline-none font-medium"
-                    />
-                  ) : (
-                    <button
-                      onClick={() => setIsEditingStore(true)}
-                      className="flex items-center gap-1 text-xs text-emerald-100 hover:text-white font-medium transition"
-                    >
-                      <span suppressHydrationWarning>{storeName}</span>
-                      <Edit3 className="w-3 h-3 text-emerald-200" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="flex items-center gap-1 text-xs text-emerald-100 hover:text-white font-medium transition"
+                    title={t('settingsBtn')}
+                  >
+                    <span suppressHydrationWarning>{storeName}</span>
+                    <Edit3 className="w-3 h-3 text-emerald-200" />
+                  </button>
                 </div>
               </div>
 
@@ -174,6 +194,20 @@ export default function TalaanDashboard() {
                   <Package className="w-4 h-4 text-emerald-200" />
                 </button>
                 <LanguageToggle />
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="p-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg active:scale-95 transition"
+                  title={t('settingsBtn')}
+                >
+                  <Settings className="w-4 h-4 text-emerald-200" />
+                </button>
+                <button
+                  onClick={handleLock}
+                  className="p-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg active:scale-95 transition"
+                  title={t('lockBtn')}
+                >
+                  <Lock className="w-4 h-4 text-emerald-200" />
+                </button>
                 <SyncBadge />
               </div>
             </div>
@@ -212,6 +246,20 @@ export default function TalaanDashboard() {
                   <span>{t('inventoryBtn')}</span>
                 </button>
                 <LanguageToggle />
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="p-1.5 bg-emerald-700/80 hover:bg-emerald-800 text-white rounded-full border border-emerald-500/50 active:scale-95 transition"
+                  title={t('settingsBtn')}
+                >
+                  <Settings className="w-3.5 h-3.5 text-emerald-200" />
+                </button>
+                <button
+                  onClick={handleLock}
+                  className="p-1.5 bg-emerald-700/80 hover:bg-emerald-800 text-white rounded-full border border-emerald-500/50 active:scale-95 transition"
+                  title={t('lockBtn')}
+                >
+                  <Lock className="w-3.5 h-3.5 text-emerald-200" />
+                </button>
                 <SyncBadge />
               </div>
             </div>
@@ -324,6 +372,12 @@ export default function TalaanDashboard() {
         isOpen={isInventoryOpen}
         onClose={() => setIsInventoryOpen(false)}
         onInventoryChanged={() => setRefreshKey((k: number) => k + 1)}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSaved={(name) => setStoreName(name)}
       />
     </div>
   );

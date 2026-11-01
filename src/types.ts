@@ -8,7 +8,9 @@ export type OutboxAction =
   | 'RECORD_TRANSACTION'
   | 'CREATE_PRODUCT'
   | 'RESTOCK_PRODUCT'
-  | 'UPDATE_PRODUCT';
+  | 'UPDATE_PRODUCT'
+  | 'ARCHIVE_PRODUCT'
+  | 'UPDATE_STORE_SETTINGS';
 export type OutboxStatus = 'PENDING' | 'SYNCING' | 'FAILED';
 export type ReminderStatus = 'PENDING' | 'SETTLED' | 'REMINDED';
 
@@ -79,6 +81,7 @@ export interface Product {
   lowStockThreshold: number;
   costPerBaseUnit: number;
   retailPrice: number;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -150,4 +153,17 @@ export interface CreateProductInput {
     multiplier: number;
     packageCost: number;
   }>;
+}
+
+export interface StoreSetting {
+  id: string; // 'default_store'
+  storeName: string;
+  pinHash: string;
+  updatedAt: string;
+}
+
+export interface UpdateStoreSettingsInput {
+  storeName?: string;
+  newPin?: string;
+  currentPin: string;
 }

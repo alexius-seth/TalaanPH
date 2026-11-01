@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Package, Plus, AlertTriangle, ArrowUpDown, Layers, Check } from 'lucide-react';
+import { X, Package, Plus, AlertTriangle, ArrowUpDown, Layers, Check, Trash2 } from 'lucide-react';
 import { inventoryService } from '../inventory';
 import { useLanguage } from '../i18n';
 import type { Product, ProductPackageUnit } from '../types';
@@ -20,6 +20,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
   const { t, lang } = useLanguage();
   const [products, setProducts] = useState<Array<Product & { packageUnits: ProductPackageUnit[] }>>([]);
   const [activeTab, setActiveTab] = useState<'LIST' | 'RESTOCK' | 'NEW'>('LIST');
+  const [productToArchive, setProductToArchive] = useState<Product | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   // Restock Form State
   const [restockProductId, setRestockProductId] = useState('');
@@ -134,6 +136,21 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
     }
   };
 
+  const handleArchiveProduct = async () => {
+    if (!productToArchive) return;
+    setIsArchiving(true);
+    try {
+      await inventoryService.archiveProduct(productToArchive.id);
+      await loadInventory();
+      onInventoryChanged?.();
+      setProductToArchive(null);
+    } catch (err: any) {
+      alert(err.message || 'Pumalya ang pag-alis ng paninda.');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
       <div className="w-full sm:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[92vh] flex flex-col">
@@ -209,15 +226,25 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                     </span>
                   </div>
 
-                  <div className="text-right">
-                    <span
-                      className={`text-base font-black ${
-                        isOut ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-gray-800'
-                      }`}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <span
+                        className={`text-base font-black ${
+                          isOut ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-gray-800'
+                        }`}
+                      >
+                        {prod.currentStock}
+                      </span>
+                      <span className="text-xs text-gray-400 block">{prod.baseUnit}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setProductToArchive(prod)}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg active:scale-95 transition"
+                      title={t('archiveProductTitle')}
                     >
-                      {prod.currentStock}
-                    </span>
-                    <span className="text-xs text-gray-400 block">{prod.baseUnit}</span>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               );
@@ -456,6 +483,41 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
               {isSavingProduct ? 'Inililista...' : 'Ilista ang Produkto'}
             </button>
           </form>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {productToArchive && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-150">
+            <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl space-y-3">
+              <div className="flex items-center gap-2 text-red-600">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-base text-gray-900">{t('archiveProductTitle')}</h4>
+              </div>
+              <p className="text-xs text-gray-600">
+                {t('archiveProductConfirm', { name: productToArchive.name })}
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setProductToArchive(null)}
+                  disabled={isArchiving}
+                  className="px-3.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleArchiveProduct}
+                  disabled={isArchiving}
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg active:scale-95 transition"
+                >
+                  {isArchiving ? t('saving') : t('archiveProductBtn')}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

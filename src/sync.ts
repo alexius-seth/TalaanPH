@@ -8,8 +8,10 @@ import type {
   PaymentReminder,
   Product,
   ProductPackageUnit,
+  StoreSetting,
   OutboxEntry,
 } from './types';
+import { setCachedStoreName } from './settings';
 
 export interface SyncState {
   isOnline: boolean;
@@ -36,6 +38,7 @@ export interface PullResponse {
   paymentReminders?: PaymentReminder[];
   products?: Product[];
   packageUnits?: ProductPackageUnit[];
+  storeSettings?: StoreSetting[];
 }
 
 export class SyncManager {
@@ -192,6 +195,7 @@ export class SyncManager {
         db.paymentReminders,
         db.products,
         db.packageUnits,
+        db.settings,
         db.syncMeta,
       ],
       async () => {
@@ -203,6 +207,11 @@ export class SyncManager {
         if (data.paymentReminders?.length) await db.paymentReminders.bulkPut(data.paymentReminders);
         if (data.products?.length) await db.products.bulkPut(data.products);
         if (data.packageUnits?.length) await db.packageUnits.bulkPut(data.packageUnits);
+        if (data.storeSettings?.length) {
+          await db.settings.bulkPut(data.storeSettings);
+          const latest = data.storeSettings[0];
+          if (latest?.storeName) setCachedStoreName(latest.storeName);
+        }
 
         await db.syncMeta.put({ key: 'last_pull_timestamp', value: data.timestamp });
       }

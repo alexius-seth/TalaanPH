@@ -23,16 +23,18 @@ const DIRECTIONS = ['DEBIT', 'CREDIT'] as const;
 const REMINDER_STATUSES = ['PENDING', 'SETTLED', 'REMINDED'] as const;
 
 // Topological order: parents before dependents so foreign keys never fail.
-// CREATE_CUSTOMER -> UPDATE_CUSTOMER -> CREATE_PRODUCT -> UPDATE_PRODUCT
-//   -> RECORD_TRANSACTION / RESTOCK_PRODUCT (+ embedded PaymentReminder) -> ARCHIVE_CUSTOMER
+// UPDATE_STORE_SETTINGS -> CREATE_CUSTOMER -> UPDATE_CUSTOMER -> CREATE_PRODUCT -> UPDATE_PRODUCT
+//   -> RECORD_TRANSACTION / RESTOCK_PRODUCT (+ embedded PaymentReminder) -> ARCHIVE_CUSTOMER / ARCHIVE_PRODUCT
 const ACTION_PRIORITY: Record<string, number> = {
-  CREATE_CUSTOMER: 1,
-  UPDATE_CUSTOMER: 2,
-  CREATE_PRODUCT: 3,
-  UPDATE_PRODUCT: 4,
-  RECORD_TRANSACTION: 5,
-  RESTOCK_PRODUCT: 5,
-  ARCHIVE_CUSTOMER: 6,
+  UPDATE_STORE_SETTINGS: 1,
+  CREATE_CUSTOMER: 2,
+  UPDATE_CUSTOMER: 3,
+  CREATE_PRODUCT: 4,
+  UPDATE_PRODUCT: 5,
+  RECORD_TRANSACTION: 6,
+  RESTOCK_PRODUCT: 6,
+  ARCHIVE_CUSTOMER: 7,
+  ARCHIVE_PRODUCT: 7,
 };
 
 // ---------- Input validation (trust boundary) ----------
@@ -131,6 +133,7 @@ async function createProduct(tx: Tx, p: Record<string, unknown>) {
     baseUnit: str(pr.baseUnit, 'product.baseUnit', 50),
     lowStockThreshold: num(pr.lowStockThreshold, 'product.lowStockThreshold'),
     retailPrice: num(pr.retailPrice, 'product.retailPrice'),
+    isActive: pr.isActive !== false,
   };
 
   await tx.product.upsert({
@@ -325,12 +328,47 @@ async function recordTransaction(tx: Tx, p: Record<string, unknown>) {
   }
 }
 
+async function updateStoreSettings(tx: Tx, p: Record<string, unknown>) {
+  const s = obj(p.settings, 'settings');
+  const storeName = str(s.storeName, 'settings.storeName', 100);
+  const pinHash = str(s.pinHash, 'settings.pinHash', 128);
+  const updatedAt = s.updatedAt ? date(s.updatedAt, 'settings.updatedAt') : new Date();
+
+  await tx.storeSetting.upsert({
+    where: { id: 'default_store' },
+    update: {
+      storeName,
+      pinHash,
+      updatedAt,
+    },
+    create: {
+      id: 'default_store',
+      storeName,
+      pinHash,
+      updatedAt,
+    },
+  });
+}
+
+async function archiveProduct(tx: Tx, p: Record<string, unknown>) {
+  const productId = uuid(p.productId, 'productId');
+  await tx.product.update({
+    where: { id: productId },
+    data: {
+      isActive: false,
+      updatedAt: p.updatedAt ? date(p.updatedAt, 'updatedAt') : new Date(),
+    },
+  });
+}
+
 const HANDLERS: Record<string, (tx: Tx, p: Record<string, unknown>) => Promise<void>> = {
+  UPDATE_STORE_SETTINGS: updateStoreSettings,
   CREATE_CUSTOMER: createCustomer,
   UPDATE_CUSTOMER: updateCustomer,
   ARCHIVE_CUSTOMER: archiveCustomer,
   CREATE_PRODUCT: createProduct,
   RESTOCK_PRODUCT: restockProduct,
+  ARCHIVE_PRODUCT: archiveProduct,
   RECORD_TRANSACTION: recordTransaction,
 };
 

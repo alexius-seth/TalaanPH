@@ -228,20 +228,24 @@ export function runChecks() {
 
   // Check 10: Sync batch mutation prioritization
   const ACTION_PRIORITY: Record<string, number> = {
-    CREATE_CUSTOMER: 1,
-    UPDATE_CUSTOMER: 2,
-    CREATE_PRODUCT: 3,
-    UPDATE_PRODUCT: 4,
-    RECORD_TRANSACTION: 5,
-    RESTOCK_PRODUCT: 5,
-    ARCHIVE_CUSTOMER: 6,
+    UPDATE_STORE_SETTINGS: 1,
+    CREATE_CUSTOMER: 2,
+    UPDATE_CUSTOMER: 3,
+    CREATE_PRODUCT: 4,
+    UPDATE_PRODUCT: 5,
+    RECORD_TRANSACTION: 6,
+    RESTOCK_PRODUCT: 6,
+    ARCHIVE_CUSTOMER: 7,
+    ARCHIVE_PRODUCT: 7,
   };
 
   const sampleBatch = [
     { action: 'RECORD_TRANSACTION', timestamp: 200 },
     { action: 'CREATE_CUSTOMER', timestamp: 100 },
+    { action: 'ARCHIVE_PRODUCT', timestamp: 350 },
     { action: 'ARCHIVE_CUSTOMER', timestamp: 300 },
     { action: 'UPDATE_CUSTOMER', timestamp: 150 },
+    { action: 'UPDATE_STORE_SETTINGS', timestamp: 50 },
   ];
 
   const sorted = [...sampleBatch].sort((a, b) => {
@@ -251,10 +255,22 @@ export function runChecks() {
     return a.timestamp - b.timestamp;
   });
 
-  assert(sorted[0].action === 'CREATE_CUSTOMER', 'CREATE_CUSTOMER must be first');
-  assert(sorted[1].action === 'UPDATE_CUSTOMER', 'UPDATE_CUSTOMER must be second');
-  assert(sorted[2].action === 'RECORD_TRANSACTION', 'RECORD_TRANSACTION must follow customers');
-  assert(sorted[3].action === 'ARCHIVE_CUSTOMER', 'ARCHIVE_CUSTOMER must be last');
+  assert(sorted[0].action === 'UPDATE_STORE_SETTINGS', 'UPDATE_STORE_SETTINGS must be first');
+  assert(sorted[1].action === 'CREATE_CUSTOMER', 'CREATE_CUSTOMER must be second');
+  assert(sorted[2].action === 'UPDATE_CUSTOMER', 'UPDATE_CUSTOMER must be third');
+  assert(sorted[3].action === 'RECORD_TRANSACTION', 'RECORD_TRANSACTION must follow customers');
+  assert(sorted[4].action === 'ARCHIVE_CUSTOMER', 'ARCHIVE_CUSTOMER must be before ARCHIVE_PRODUCT by timestamp');
+  assert(sorted[5].action === 'ARCHIVE_PRODUCT', 'ARCHIVE_PRODUCT must be last');
+
+  // Check 10b: Product soft-delete filter
+  const testProducts = [
+    { id: '1', name: 'Active Prod', isActive: true },
+    { id: '2', name: 'Legacy Prod' }, // undefined defaults to active
+    { id: '3', name: 'Archived Prod', isActive: false },
+  ];
+  const activeOnly = testProducts.filter((p) => p.isActive !== false);
+  assert(activeOnly.length === 2, 'Archived products must be excluded');
+  assert(!activeOnly.some((p) => p.id === '3'), 'Archived product ID 3 must not appear');
 
   // Check 11: integer-centavo math is drift-free and NaN-safe
   const toCents = (n: number) => (Number.isFinite(n) ? Math.round((n + Number.EPSILON) * 100) : 0);
@@ -265,6 +281,14 @@ export function runChecks() {
   assert(drift !== 100 && cents / 100 === 100, 'Integer centavo sum must be exact (1000 x 0.10 = 100.00)');
   assert(toCents(NaN) === 0 && toCents(Infinity) === 0, 'Non-finite amounts must not poison balances');
   assert(toCents(1.005) === 101 && toCents(0.1 + 0.2) === 30, 'Centavo rounding mismatch');
+
+  // Check 12: Store settings PIN hashing and validation
+  const pinRegex = /^\d{4,6}$/;
+  assert(pinRegex.test('1234'), '4-digit PIN should be valid');
+  assert(pinRegex.test('123456'), '6-digit PIN should be valid');
+  assert(!pinRegex.test('123'), '3-digit PIN should be invalid');
+  assert(!pinRegex.test('1234567'), '7-digit PIN should be invalid');
+  assert(!pinRegex.test('abcd'), 'alphanumeric PIN should be invalid');
 
   console.log('✓ All core ledger, SMS, sync, reminders, archive rules, and validation asserts passed.');
 }

@@ -131,6 +131,32 @@ export const translations = {
     unitBox: 'Kahon/Sako',
     unitPieces: 'piraso',
     stockAddedPreview: 'Dagdagan ng {count} {unit}',
+    archiveProductTitle: 'Alisin ang Paninda',
+    archiveProductConfirm: 'Sigurado ka bang nais mong alisin ang "{name}" sa listahan ng paninda?',
+    archiveProductBtn: 'Alisin',
+
+    // Settings Modal
+    settingsTitle: 'Mga Setting ng Tindahan',
+    settingsBtn: 'Settings',
+    storeNameLabel: 'Pangalan ng Tindahan',
+    newPinLabel: 'Bagong PIN (4-6 digits, opsyonal)',
+    newPinPlaceholder: 'Iwanang blangko kung walang pagbabago',
+    currentPinLabel: 'Kasalukuyang PIN *',
+    currentPinPlaceholder: 'Ilagay ang kasalukuyang PIN',
+    currentPinHelp: 'Kailangan ang kasalukuyang PIN upang kumpirmahin ang pagbabago.',
+    defaultPinHelp: 'Default PIN: 1234 (kung bago o hindi pa napapalitan).',
+    pinLengthError: 'Ang bagong PIN ay dapat 4 hanggang 6 na numero.',
+    invalidCurrentPin: 'Maling kasalukuyang PIN.',
+    settingsSaved: 'Matagumpay na na-update ang mga setting.',
+
+    // Startup Lock Screen
+    lockScreenTitle: 'Ilagay ang PIN ng Tindahan',
+    lockScreenSubtitle: 'Naka-lock ang Talaan para sa seguridad ng iyong tindahan.',
+    enterPinPrompt: 'I-type ang 4-6 digit PIN',
+    unlockBtn: 'I-unlock',
+    lockBtn: 'I-lock ang Screen',
+    incorrectPin: 'Maling PIN. Subukan muli.',
+    lockedStatus: 'Naka-lock',
   },
   en: {
     // Header & App
@@ -258,6 +284,32 @@ export const translations = {
     unitBox: 'Box/Sack',
     unitPieces: 'pieces',
     stockAddedPreview: 'Add {count} {unit}',
+    archiveProductTitle: 'Archive Product',
+    archiveProductConfirm: 'Are you sure you want to remove "{name}" from the product list?',
+    archiveProductBtn: 'Remove',
+
+    // Settings Modal
+    settingsTitle: 'Store Settings',
+    settingsBtn: 'Settings',
+    storeNameLabel: 'Store Name',
+    newPinLabel: 'New PIN (4-6 digits, optional)',
+    newPinPlaceholder: 'Leave blank if not changing',
+    currentPinLabel: 'Current PIN *',
+    currentPinPlaceholder: 'Enter current PIN',
+    currentPinHelp: 'Current PIN is required to confirm any changes.',
+    defaultPinHelp: 'Default PIN: 1234 (if not yet changed).',
+    pinLengthError: 'New PIN must be 4 to 6 digits.',
+    invalidCurrentPin: 'Incorrect current PIN.',
+    settingsSaved: 'Store settings successfully updated.',
+
+    // Startup Lock Screen
+    lockScreenTitle: 'Enter Store PIN',
+    lockScreenSubtitle: 'Talaan is locked for store counter security.',
+    enterPinPrompt: 'Type 4-6 digit PIN',
+    unlockBtn: 'Unlock',
+    lockBtn: 'Lock Screen',
+    incorrectPin: 'Incorrect PIN. Try again.',
+    lockedStatus: 'Locked',
   },
 } as const;
 

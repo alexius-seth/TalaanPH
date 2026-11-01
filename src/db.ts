@@ -8,6 +8,7 @@ import type {
   PaymentReminder,
   Product,
   ProductPackageUnit,
+  StoreSetting,
   OutboxEntry,
   SyncMeta,
 } from './types';
@@ -21,6 +22,7 @@ export class TalaanDatabase extends Dexie {
   paymentReminders!: Table<PaymentReminder, string>;
   products!: Table<Product, string>;
   packageUnits!: Table<ProductPackageUnit, string>;
+  settings!: Table<StoreSetting, string>;
   syncOutbox!: Table<OutboxEntry, string>;
   syncMeta!: Table<SyncMeta, string>;
 
@@ -46,6 +48,14 @@ export class TalaanDatabase extends Dexie {
       transactionItems: 'id, transactionId, productId',
       products: 'id, name, category, currentStock, createdAt',
       packageUnits: 'id, productId, unitName',
+    });
+
+    this.version(4).stores({
+      settings: 'id, updatedAt',
+    });
+
+    this.version(5).stores({
+      products: 'id, name, category, currentStock, isActive, createdAt',
     });
   }
 }

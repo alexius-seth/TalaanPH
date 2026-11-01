@@ -23,6 +23,7 @@ export async function GET(req: Request) {
       paymentReminders,
       products,
       packageUnits,
+      storeSettings,
     ] = await Promise.all([
       prisma.customer.findMany({
         where: { updatedAt: { gt: sinceDate } },
@@ -50,6 +51,9 @@ export async function GET(req: Request) {
         where: { updatedAt: { gt: sinceDate } },
       }),
       prisma.productPackageUnit.findMany(),
+      prisma.storeSetting.findMany({
+        where: { updatedAt: { gt: sinceDate } },
+      }),
     ]);
 
     const formattedCustomers = customers.map((c: any) => ({
@@ -108,6 +112,13 @@ export async function GET(req: Request) {
       packageCost: Number(u.packageCost),
     }));
 
+    const formattedStoreSettings = storeSettings.map((s: any) => ({
+      id: s.id,
+      storeName: s.storeName,
+      pinHash: s.pinHash,
+      updatedAt: s.updatedAt.toISOString(),
+    }));
+
     return NextResponse.json({
       timestamp: snapshotAt.toISOString(),
       customers: formattedCustomers,
@@ -118,6 +129,7 @@ export async function GET(req: Request) {
       paymentReminders: formattedReminders,
       products: formattedProducts,
       packageUnits: formattedUnits,
+      storeSettings: formattedStoreSettings,
     });
   } catch (error: any) {
     console.error('[/api/sync/pull] Pull error:', error);

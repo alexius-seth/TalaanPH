@@ -1,5 +1,7 @@
+import { getCachedStoreName } from './settings';
+
 export interface ReceiptParams {
-  storeName: string;
+  storeName?: string;
   nickname: string;
   refNumber: string;
   type: string;
@@ -10,7 +12,7 @@ export interface ReceiptParams {
 }
 
 export interface ReminderParams {
-  storeName: string;
+  storeName?: string;
   nickname: string;
   balance: number;
   dueDate: string;
@@ -22,7 +24,8 @@ export interface ReminderParams {
  * Formats a single-segment GSM-7 compliant SMS receipt (<= 160 chars).
  */
 export function formatReceiptText(params: ReceiptParams): string {
-  const cleanStore = params.storeName.trim().slice(0, 20);
+  const rawStore = params.storeName || getCachedStoreName() || 'Talaan Store';
+  const cleanStore = rawStore.trim().slice(0, 20);
   const cleanNick = params.nickname.trim().slice(0, 18);
   const amountStr = params.amount.toFixed(2);
   const balanceStr = params.balance.toFixed(2);
@@ -57,7 +60,8 @@ export function formatReceiptText(params: ReceiptParams): string {
  * Formats a single-segment GSM-7 compliant SMS payment reminder.
  */
 export function formatReminderText(params: ReminderParams): string {
-  const cleanStore = params.storeName.trim().slice(0, 18);
+  const rawStore = params.storeName || getCachedStoreName() || 'Talaan Store';
+  const cleanStore = rawStore.trim().slice(0, 18);
   const cleanNick = params.nickname.trim().slice(0, 16);
   const balanceStr = params.balance.toFixed(2);
   const isEn = params.lang === 'en';
