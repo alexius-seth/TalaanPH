@@ -8,12 +8,14 @@ import { useLanguage, LanguageToggle } from '../i18n';
 
 interface PinLockScreenProps {
   storeName?: string;
-  onUnlocked: () => void;
+  onUnlocked?: () => void;
+  onUnlock?: () => void;
 }
 
 export const PinLockScreen: React.FC<PinLockScreenProps> = ({
   storeName: initialStoreName,
   onUnlocked,
+  onUnlock,
 }) => {
   const { t } = useLanguage();
   const [storeName, setStoreName] = useState(initialStoreName || 'Talaan Store');
@@ -52,7 +54,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
       const hashed = hashPin(candidatePin);
 
       if (hashed === settings.pinHash) {
-        onUnlocked();
+        (onUnlock || onUnlocked)?.();
       } else {
         triggerError(t('incorrectPin'));
       }

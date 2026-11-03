@@ -81,11 +81,19 @@ export const translations = {
     customerLabel: 'Suki:',
     smsNotice: 'Walang bayad! Gagamitin ang default SMS app ng iyong cellphone.',
 
-    // Due Today Banner
+    // Due Today Banner & Reminders
     dueTodayTitle: 'Mga Dapat Maningil Ngayong Araw',
     dueTodayDesc: 'May {count} suki na may nakatakdang bayad ngayong araw.',
     sendReminder: 'I-text ang Paalala',
     viewDue: 'Tingnan',
+    toneSelect: 'Tono ng Mensahe:',
+    toneFriendly: 'Malumanay',
+    toneFormal: 'Pormal',
+    toneFirm: 'Madiin',
+    sendViaSim: 'I-text via SIM (Libre)',
+    smsPreview: 'Preview ng Mensahe',
+    charCountLabel: '{count}/160 letra',
+    singleSegmentBadge: '1 SMS Segment (Libre sa unli-text)',
 
     // Customer Add / Edit
     newCustomerTitle: 'Bagong Suki',
@@ -234,11 +242,19 @@ export const translations = {
     customerLabel: 'Customer:',
     smsNotice: 'Free! Uses your phone\'s native SMS messaging app.',
 
-    // Due Today Banner
+    // Due Today Banner & Reminders
     dueTodayTitle: 'Due for Collection Today',
     dueTodayDesc: '{count} customers have payments due today.',
     sendReminder: 'Send SMS Reminder',
     viewDue: 'View',
+    toneSelect: 'Message Tone:',
+    toneFriendly: 'Friendly',
+    toneFormal: 'Formal',
+    toneFirm: 'Firm',
+    sendViaSim: 'Send via SIM (Free)',
+    smsPreview: 'Message Preview',
+    charCountLabel: '{count}/160 chars',
+    singleSegmentBadge: '1 SMS Segment (Unli-text safe)',
 
     // Customer Add / Edit
     newCustomerTitle: 'New Customer',

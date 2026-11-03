@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Phone, CreditCard, PlusCircle, MinusCircle, Clock, Receipt, AlertTriangle, Pencil } from 'lucide-react';
+import { Phone, CreditCard, PlusCircle, MinusCircle, Clock, Receipt, AlertTriangle, Pencil, Send } from 'lucide-react';
 import { db } from '../db';
 import { getCustomerAccountCode } from '../ledger';
+import { ReminderModal } from './ReminderModal';
 import { useLanguage } from '../i18n';
 import type { Customer, TransactionType } from '../types';
 
@@ -35,6 +36,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
   const { t } = useLanguage();
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -123,6 +125,16 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2.5 shrink-0">
+          {balance > 0 && (
+            <button
+              onClick={() => setIsReminderOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-sm rounded-xl shadow-xs transition"
+              title={t('sendReminder')}
+            >
+              <Send className="w-4 h-4" />
+              <span className="hidden md:inline">{t('sendReminder')}</span>
+            </button>
+          )}
           <button
             onClick={() => onOpenTransaction('CREDIT_PURCHASE')}
             className="flex items-center gap-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-sm rounded-xl shadow-xs transition"
@@ -251,6 +263,18 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
           </div>
         )}
       </div>
+
+      {isReminderOpen && (
+        <ReminderModal
+          isOpen={isReminderOpen}
+          onClose={() => setIsReminderOpen(false)}
+          customerItem={{
+            customer,
+            balance,
+            dueDate: new Date().toISOString().split('T')[0],
+          }}
+        />
+      )}
     </div>
   );
 };
