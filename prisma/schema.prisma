@@ -175,7 +175,7 @@ model ProcessedSyncEvent {
 
 model StoreSetting {
   id        String   @id @default("default_store")
-  storeName String   @default("Talaan Store") @map("store_name")
+  storeName String   @default("Aking Tindahan") @map("store_name")
   pinHash   String   @map("pin_hash")
   updatedAt DateTime @updatedAt @map("updated_at")
 

@@ -5,7 +5,7 @@ import { syncManager } from './sync';
 import type { StoreSetting, UpdateStoreSettingsInput } from './types';
 
 export const DEFAULT_STORE_ID = 'default_store';
-export const DEFAULT_STORE_NAME = 'Talaan Store';
+export const DEFAULT_STORE_NAME = 'Aking Tindahan';
 const DEFAULT_PIN = '1234';
 
 let cachedStoreName: string = DEFAULT_STORE_NAME;

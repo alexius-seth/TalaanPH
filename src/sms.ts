@@ -27,7 +27,7 @@ export interface ReminderParams {
  * Formats a single-segment GSM-7 compliant SMS receipt (<= 160 chars).
  */
 export function formatReceiptText(params: ReceiptParams): string {
-  const rawStore = params.storeName || getCachedStoreName() || 'Talaan Store';
+  const rawStore = params.storeName || getCachedStoreName() || 'Aking Tindahan';
   const cleanStore = rawStore.trim().slice(0, 20);
   const cleanNick = params.nickname.trim().slice(0, 18);
   const amountStr = params.amount.toFixed(2);
@@ -64,7 +64,7 @@ export function formatReceiptText(params: ReceiptParams): string {
  * Supports friendly, formal, and firm tone options.
  */
 export function formatReminderText(params: ReminderParams): string {
-  const rawStore = params.storeName || getCachedStoreName() || 'Talaan Store';
+  const rawStore = params.storeName || getCachedStoreName() || 'Aking Tindahan';
   const cleanStore = rawStore.trim().slice(0, 18);
   const cleanNick = params.nickname.trim().slice(0, 16);
   const balanceStr = params.balance.toFixed(2);

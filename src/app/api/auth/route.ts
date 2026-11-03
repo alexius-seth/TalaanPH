@@ -16,13 +16,18 @@ export async function POST(req: Request) {
 
     const hashedInput = hashPin(pin);
 
-    // 1. Check PostgreSQL StoreSetting singleton
-    const setting = await prisma.storeSetting.findUnique({
-      where: { id: 'default_store' },
-    });
+    // 1. Check PostgreSQL StoreSetting singleton (with safe fallback if DB uninitialized)
+    let setting = null;
+    try {
+      setting = await prisma.storeSetting.findUnique({
+        where: { id: 'default_store' },
+      });
+    } catch (dbErr) {
+      console.warn('[/api/auth] Database lookup skipped or unavailable, using environment/default fallback:', dbErr);
+    }
 
     let isValid = false;
-    let storeName = 'Talaan Store';
+    let storeName = 'Aking Tindahan';
 
     if (setting?.pinHash) {
       isValid = hashedInput === setting.pinHash;

@@ -8,7 +8,13 @@ export const dynamic = 'force-dynamic';
 function isAuthorized(req: Request): boolean {
   const cronSecret = process.env.CRON_SECRET;
   // Fail closed in production: a missing secret must never open the endpoint.
-  if (!cronSecret) return process.env.NODE_ENV !== 'production';
+  if (!cronSecret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('[/api/cron/reminders] Execution blocked: CRON_SECRET is not configured in production.');
+      return false;
+    }
+    return true;
+  }
   const expected = Buffer.from(`Bearer ${cronSecret}`);
   const received = Buffer.from(req.headers.get('authorization') ?? '');
   return received.length === expected.length && timingSafeEqual(received, expected);
@@ -18,12 +24,24 @@ export async function GET(req: Request) {
   try {
     // 1. Security Check: enforce CRON_SECRET bearer token (Vercel Cron sends it automatically)
     if (!isAuthorized(req)) {
+      console.warn('[/api/cron/reminders] Unauthorized cron invocation attempt rejected.');
       return NextResponse.json({ error: 'Unauthorized cron trigger' }, { status: 401 });
     }
 
     const semaphoreApiKey = process.env.SEMAPHORE_API_KEY;
-    const storeName = process.env.STORE_NAME || 'Talaan Store';
+    const storeName = process.env.STORE_NAME || 'Aking Tindahan';
     const today = new Date();
+
+    // Early exit if SMS gateway is not configured
+    if (!semaphoreApiKey) {
+      console.log('[/api/cron/reminders] SEMAPHORE_API_KEY not configured. Skipping automated SMS dispatch.');
+      return NextResponse.json({
+        success: true,
+        message: 'SEMAPHORE_API_KEY not configured; SMS dispatch skipped.',
+        processedCount: 0,
+        results: [],
+      });
+    }
 
     // 2. Query due reminders where status is PENDING and dueDate <= today
     const dueReminders = await prisma.paymentReminder.findMany({

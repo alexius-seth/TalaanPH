@@ -3,7 +3,14 @@ import { createHmac, timingSafeEqual } from 'crypto';
 export const AUTH_COOKIE = 'talaan_session';
 
 function getSecret(): string {
-  return process.env.AUTH_SECRET || process.env.STORE_PIN || 'talaan-default-secret-salt';
+  const secret = process.env.AUTH_SECRET || process.env.STORE_PIN;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('[AUTH] Warning: AUTH_SECRET not configured in production environment. Using safe fallback.');
+    }
+    return 'talaan-dev-secret-fallback-2026';
+  }
+  return secret;
 }
 
 /**
@@ -64,3 +71,4 @@ export function isSessionAuthorized(req: Request): boolean {
 
   return false;
 }
+

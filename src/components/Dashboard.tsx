@@ -22,7 +22,7 @@ import type { ReceiptParams } from '../sms';
 export default function Dashboard() {
   const { t, lang } = useLanguage();
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [storeName, setStoreName] = useState('Talaan Store');
+  const [storeName, setStoreName] = useState('Aking Tindahan');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 

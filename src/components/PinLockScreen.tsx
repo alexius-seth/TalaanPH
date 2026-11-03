@@ -18,7 +18,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
   onUnlock,
 }) => {
   const { t } = useLanguage();
-  const [storeName, setStoreName] = useState(initialStoreName || 'Talaan Store');
+  const [storeName, setStoreName] = useState(initialStoreName || 'Aking Tindahan');
   const [pin, setPin] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isShaking, setIsShaking] = useState(false);

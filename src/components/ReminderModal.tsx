@@ -33,7 +33,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
   isOpen,
   onClose,
   customerItem,
-  storeName = 'Talaan Store',
+  storeName = 'Aking Tindahan',
   dueItems,
   onSelectCustomer,
   sentReminderIds,
