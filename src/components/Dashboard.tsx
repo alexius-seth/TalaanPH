@@ -52,6 +52,13 @@ export default function Dashboard() {
     void getStoreSettings().then((s) => {
       if (s?.storeName) setStoreName(s.storeName);
     });
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+          console.warn('[PWA] Service worker registration failed:', err);
+        });
+      });
+    }
   }, []);
 
   const handleUnlock = () => {
@@ -367,3 +374,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

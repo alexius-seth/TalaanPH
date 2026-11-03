@@ -6,6 +6,12 @@ export const metadata: Metadata = {
   title: 'Talaan - Tindahan Ledger',
   description: 'Offline-First Micro-Credit and Inventory para sa Sari-Sari Stores',
   manifest: '/manifest.json',
+  icons: {
+    apple: '/icons/icon-192x192.png',
+  },
+  other: {
+    google: 'notranslate',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -31,29 +37,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tl" translate="no" className="notranslate" suppressHydrationWarning>
-      <head>
-        <meta name="google" content="notranslate" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-      </head>
       <body className="antialiased bg-slate-50 select-none notranslate" suppressHydrationWarning>
         <LanguageProvider>
           {children}
         </LanguageProvider>
-        {process.env.NODE_ENV === 'production' && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                if ('serviceWorker' in navigator) {
-                  window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js').catch(function(err) {
-                      console.warn('[PWA] Service worker registration failed:', err);
-                    });
-                  });
-                }
-              `,
-            }}
-          />
-        )}
       </body>
     </html>
   );
