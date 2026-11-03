@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { isSessionAuthorized } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -380,6 +381,10 @@ function safeMessage(err: unknown): string {
 
 export async function POST(req: Request) {
   try {
+    if (!isSessionAuthorized(req)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized session' }, { status: 401 });
+    }
+
     const declaredLength = Number(req.headers.get('content-length') ?? 0);
     if (declaredLength > MAX_BODY_BYTES) {
       return NextResponse.json({ success: false, error: 'Payload too large' }, { status: 413 });

@@ -6,8 +6,7 @@ import type { StoreSetting, UpdateStoreSettingsInput } from './types';
 
 export const DEFAULT_STORE_ID = 'default_store';
 export const DEFAULT_STORE_NAME = 'Talaan Store';
-const DEFAULT_PIN =
-  process.env.NEXT_PUBLIC_STORE_PIN || process.env.STORE_PIN || '1234';
+const DEFAULT_PIN = '1234';
 
 let cachedStoreName: string = DEFAULT_STORE_NAME;
 

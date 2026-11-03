@@ -54,6 +54,14 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
       const hashed = hashPin(candidatePin);
 
       if (hashed === settings.pinHash) {
+        // Authenticate with server to establish session cookie for cloud sync
+        if (typeof window !== 'undefined') {
+          void fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: candidatePin }),
+          }).catch(() => {});
+        }
         (onUnlock || onUnlocked)?.();
       } else {
         triggerError(t('incorrectPin'));

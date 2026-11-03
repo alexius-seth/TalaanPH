@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { isSessionAuthorized } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
+    if (!isSessionAuthorized(req)) {
+      return NextResponse.json({ error: 'Unauthorized session' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const sinceParam = searchParams.get('since');
     const sinceDate = sinceParam ? new Date(sinceParam) : new Date(0);

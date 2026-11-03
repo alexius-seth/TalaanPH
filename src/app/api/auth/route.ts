@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPin } from '@/lib/hash';
+import { createSessionToken, AUTH_COOKIE } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,10 +37,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Invalid PIN' }, { status: 401 });
     }
 
-    return NextResponse.json({
+    const token = createSessionToken();
+    const response = NextResponse.json({
       success: true,
       storeName,
+      token,
     });
+
+    response.cookies.set(AUTH_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
+
+    return response;
   } catch (error) {
     console.error('[/api/auth] Authentication error:', error);
     return NextResponse.json({ success: false, error: 'Authentication failed' }, { status: 500 });

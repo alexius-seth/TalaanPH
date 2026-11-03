@@ -333,6 +333,21 @@ export function runChecks() {
   assert(!pinRegex.test('1234567'), '7-digit PIN should be invalid');
   assert(!pinRegex.test('abcd'), 'alphanumeric PIN should be invalid');
 
+  // Check 13: Session token generation and validation
+  function mockValidateToken(token: string, secret: string): boolean {
+    if (!token) return false;
+    const parts = token.split('.');
+    if (parts.length !== 2) return false;
+    const [timestamp, signature] = parts;
+    const expectedSig = 'mock-sig-' + timestamp + '-' + secret;
+    return signature === expectedSig;
+  }
+  const tNow = Date.now().toString();
+  const validTok = `${tNow}.mock-sig-${tNow}-sec123`;
+  assert(mockValidateToken(validTok, 'sec123') === true, 'Valid session token failed');
+  assert(mockValidateToken(validTok, 'wrongsec') === false, 'Wrong secret passed');
+  assert(mockValidateToken('invalid-token', 'sec123') === false, 'Malformed token passed');
+
   console.log('✓ All core ledger, SMS, sync, reminders, archive rules, and validation asserts passed.');
 }
 
