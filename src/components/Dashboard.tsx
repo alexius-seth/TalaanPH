@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Store, Edit3, Users, DollarSign, ArrowRight, UserCheck, Package, Settings, Lock } from 'lucide-react';
+import { Store, Edit3, Users, Wallet, ArrowRight, UserCheck, Package, Settings, Lock } from 'lucide-react';
 import { SyncBadge } from './SyncBadge';
 import { CustomerList, type CustomerWithBalance } from './CustomerList';
 import { DueTodayBanner } from './DueTodayBanner';
@@ -208,7 +208,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 pt-1 sm:pt-0 border-t sm:border-t-0 border-emerald-500/50">
               <div className="flex items-center gap-4 sm:gap-6 text-xs w-full sm:w-auto justify-between sm:justify-start">
                 <div className="flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
+                  <Wallet className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
                   <div>
                     <span className="text-emerald-200 text-[10px] block leading-none">{t('totalReceivables')}</span>
                     <span className="font-extrabold text-xs sm:text-sm text-white">

@@ -119,7 +119,7 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6">
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-8">
           {errorMsg && (
             <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />

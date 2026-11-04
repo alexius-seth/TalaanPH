@@ -99,7 +99,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6 space-y-4">
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-8 space-y-4">
           {/* Customer tabs (if multiple customers due) */}
         {dueItems && dueItems.length > 1 && (
           <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5">

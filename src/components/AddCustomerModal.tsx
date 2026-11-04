@@ -90,7 +90,7 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6 space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-8 space-y-4">
           {/* Prominent Nickname */}
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">

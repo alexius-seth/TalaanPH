@@ -47,7 +47,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6">
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-8">
           {/* Paper receipt box */}
         <div className="bg-amber-50/70 border border-amber-200 font-mono text-xs rounded-lg p-4 mb-5 text-gray-800 space-y-1.5 shadow-inner">
           <p className="font-bold text-center text-sm mb-2 text-amber-900 border-b border-amber-200 pb-1">

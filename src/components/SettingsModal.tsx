@@ -97,7 +97,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6">
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-8">
           {errorMsg && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
               <AlertCircle className="w-4 h-4 shrink-0" />

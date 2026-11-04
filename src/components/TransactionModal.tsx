@@ -195,7 +195,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6">
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-8">
 
         {/* Tab switch */}
         <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl mb-4">
