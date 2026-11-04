@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lock, Delete, ArrowRight, Store, ShieldCheck, AlertCircle } from 'lucide-react';
 import { getStoreSettings } from '../settings';
 import { hashPin } from '../lib/hash';
@@ -23,13 +23,11 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [isShaking, setIsShaking] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void getStoreSettings().then((s) => {
       if (s?.storeName) setStoreName(s.storeName);
     });
-    inputRef.current?.focus();
   }, []);
 
   const triggerError = (msg: string) => {
@@ -37,7 +35,6 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
     setIsShaking(true);
     setPin('');
     setTimeout(() => setIsShaking(false), 500);
-    inputRef.current?.focus();
   };
 
   const handleVerifyPin = async (candidatePin: string) => {
@@ -78,9 +75,6 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
       const next = pin + num;
       setPin(next);
       setErrorMsg('');
-      if (next.length >= 4 && next.length <= 6) {
-        // Can be manually submitted or automatic on 4/6
-      }
     }
   };
 
@@ -92,8 +86,34 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
   const handleClear = () => {
     setPin('');
     setErrorMsg('');
-    inputRef.current?.focus();
   };
+
+  // Capture physical keyboard/numpad events for desktop/PC users
+  // Avoids rendering focused inputs that summon virtual mobile keyboards on touch devices
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        handleKeyPress(e.key);
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        handleDelete();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (pin.length >= 4 && !isVerifying) {
+          void handleVerifyPin(pin);
+        }
+      } else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        handleClear();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pin, isVerifying]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,27 +156,11 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
           {t('lockScreenSubtitle')}
         </p>
 
-        {/* Hidden keyboard input for physical typing */}
+        {/* Numpad & Submit Form (Zero focusable inputs to avoid native mobile keyboard overlays) */}
         <form onSubmit={handleFormSubmit} className="w-full flex flex-col items-center">
-          <input
-            ref={inputRef}
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={6}
-            value={pin}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '');
-              setPin(val);
-              setErrorMsg('');
-            }}
-            className="sr-only"
-          />
-
           {/* Masked PIN Dots Indicator */}
           <div
-            onClick={() => inputRef.current?.focus()}
-            className={`flex items-center justify-center gap-3 py-3 px-6 bg-emerald-950/40 border border-emerald-600/40 rounded-2xl cursor-pointer transition ${
+            className={`flex items-center justify-center gap-3 py-3 px-6 bg-emerald-950/40 border border-emerald-600/40 rounded-2xl transition ${
               isShaking ? 'animate-bounce border-red-400 bg-red-950/40' : ''
             }`}
           >

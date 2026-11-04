@@ -36,8 +36,8 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl max-h-[90dvh] flex flex-col">
+        <div className="flex justify-between items-center pb-3 border-b border-gray-100 shrink-0">
           <h3 className="text-lg font-bold text-gray-900">{t('receiptTitle')}</h3>
           <button
             onClick={onClose}
@@ -47,7 +47,8 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </button>
         </div>
 
-        {/* Paper receipt box */}
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6">
+          {/* Paper receipt box */}
         <div className="bg-amber-50/70 border border-amber-200 font-mono text-xs rounded-lg p-4 mb-5 text-gray-800 space-y-1.5 shadow-inner">
           <p className="font-bold text-center text-sm mb-2 text-amber-900 border-b border-amber-200 pb-1">
             [Talaan - {receiptParams.storeName}]
@@ -100,6 +101,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           >
             {t('doneClose')}
           </button>
+        </div>
         </div>
       </div>
     </div>

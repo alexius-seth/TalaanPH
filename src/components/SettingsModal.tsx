@@ -77,41 +77,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[95vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl max-h-[90dvh] flex flex-col">
+        <div className="flex justify-between items-center pb-3 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-800">
+            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-800 shrink-0">
               <Settings className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">{t('settingsTitle')}</h3>
-              <p className="text-xs text-gray-500">{t('defaultPinHelp')}</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900">{t('settingsTitle')}</h3>
+              <p className="text-[11px] text-gray-500">{t('defaultPinHelp')}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-full text-gray-400 hover:text-gray-600 active:scale-95 transition"
+            className="p-1 rounded-full text-gray-400 hover:text-gray-600 active:scale-95 transition shrink-0"
             title={t('cancel')}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {errorMsg && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6">
+          {errorMsg && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
-        {successMsg && (
-          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-700">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
+          {successMsg && (
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-700">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{successMsg}</span>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
               {t('storeNameLabel')}
@@ -191,6 +192,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

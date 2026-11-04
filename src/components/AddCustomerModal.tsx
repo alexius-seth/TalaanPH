@@ -75,9 +75,9 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
-      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[95vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 animate-in fade-in duration-150">
+      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl max-h-[90dvh] flex flex-col">
+        <div className="flex justify-between items-center pb-3 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-emerald-600" />
             <h3 className="text-lg font-bold text-gray-900">{t('newCustomerTitle')}</h3>
@@ -90,7 +90,7 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6 space-y-4">
           {/* Prominent Nickname */}
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">

@@ -181,9 +181,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
-      <div className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[95vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 animate-in fade-in duration-150">
+      <div className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl max-h-[90dvh] flex flex-col">
+        <div className="flex justify-between items-center pb-3 border-b border-gray-100 shrink-0">
           <div>
             <h3 className="text-lg font-bold text-gray-900">{customer.nickname}</h3>
             <p className="text-xs text-gray-500">
@@ -194,6 +194,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6">
 
         {/* Tab switch */}
         <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl mb-4">
@@ -470,6 +472,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             {isSubmitting ? t('recordingTxn') : t('recordTxnBtn')}
           </button>
         </form>
+        </div>
       </div>
     </div>
   );

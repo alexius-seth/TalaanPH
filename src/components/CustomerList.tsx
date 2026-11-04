@@ -77,23 +77,24 @@ export const CustomerList: React.FC<CustomerListProps> = ({
   return (
     <div className="w-full space-y-3">
       {/* Top Search & Add Row */}
-      <div className="flex gap-2 items-center">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+      <div className="flex gap-2 items-center w-full min-w-0">
+        <div className="relative flex-1 min-w-0">
+          <Search className="w-4 h-4 absolute left-3 top-2.5 sm:top-3 text-gray-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white truncate"
           />
         </div>
         <button
           onClick={onAddNewCustomer}
-          className="p-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl shadow-xs transition shrink-0"
+          className="p-2 sm:px-3 sm:py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl shadow-xs transition shrink-0 flex items-center gap-1.5"
           title={t('addCustomerBtn')}
         >
-          <UserPlus className="w-5 h-5" />
+          <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline text-xs font-bold">{t('addCustomerBtn')}</span>
         </button>
       </div>
 

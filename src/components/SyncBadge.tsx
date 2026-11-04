@@ -42,7 +42,16 @@ export const SyncBadge: React.FC = () => {
     <button
       onClick={handleManualSync}
       disabled={syncState.isSyncing}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm transition active:scale-95 ${
+      title={
+        !syncState.isOnline
+          ? t('offline')
+          : syncState.isSyncing
+          ? t('syncing')
+          : syncState.pendingCount > 0
+          ? `${t('online')} (${syncState.pendingCount})`
+          : t('online')
+      }
+      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold shadow-xs transition active:scale-95 shrink-0 ${
         !syncState.isOnline
           ? 'bg-amber-100 text-amber-900 border border-amber-300'
           : syncState.isSyncing
@@ -54,23 +63,23 @@ export const SyncBadge: React.FC = () => {
     >
       {!syncState.isOnline ? (
         <>
-          <WifiOff className="w-3.5 h-3.5" />
-          <span>{t('offline')}</span>
+          <WifiOff className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden min-[420px]:inline sm:inline">{t('offline')}</span>
         </>
       ) : syncState.isSyncing ? (
         <>
-          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-          <span>{t('syncing')}</span>
+          <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0 text-blue-700" />
+          <span className="hidden min-[420px]:inline sm:inline">{t('syncing')}</span>
         </>
       ) : (
         <>
-          <Wifi className="w-3.5 h-3.5" />
-          <span>{t('online')}</span>
+          <Wifi className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
+          <span className="hidden min-[420px]:inline sm:inline">{t('online')}</span>
         </>
       )}
 
       {syncState.pendingCount > 0 && (
-        <span className="ml-1 bg-black/10 px-1.5 py-0.2 rounded-full text-[10px]">
+        <span className="bg-black/10 px-1.5 py-0.2 rounded-full text-[10px] font-bold">
           {syncState.pendingCount}
         </span>
       )}

@@ -95,16 +95,16 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({
   return (
     <>
       {/* Top Banner Alert Bar */}
-      <div className="w-full bg-amber-500 text-amber-950 px-4 py-2 text-xs font-bold shadow-xs flex items-center justify-between transition animate-in fade-in">
-        <div className="flex items-center gap-2">
+      <div className="w-full bg-amber-500 text-amber-950 px-3 sm:px-4 py-2 text-xs font-bold shadow-xs flex items-center justify-between gap-2 transition animate-in fade-in overflow-hidden">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <AlertCircle className="w-4 h-4 text-amber-950 shrink-0" />
-          <span>
+          <span className="truncate">
             ⚠️ {t('dueTodayDesc', { count: dueItems.length })}
           </span>
         </div>
         <button
           onClick={() => setIsOpenDialog(true)}
-          className="px-2.5 py-1 bg-amber-950 text-amber-100 hover:bg-black active:scale-95 text-[11px] font-extrabold rounded-lg transition"
+          className="px-2 sm:px-2.5 py-1 bg-amber-950 text-amber-100 hover:bg-black active:scale-95 text-[11px] font-extrabold rounded-lg transition shrink-0"
         >
           {t('viewDue')}
         </button>

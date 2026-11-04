@@ -28,6 +28,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -37,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tl" translate="no" className="notranslate" suppressHydrationWarning>
-      <body className="antialiased bg-slate-50 select-none notranslate" suppressHydrationWarning>
+      <body className="antialiased bg-slate-50 select-none notranslate overflow-x-hidden min-h-screen" suppressHydrationWarning>
         <LanguageProvider>
           {children}
         </LanguageProvider>

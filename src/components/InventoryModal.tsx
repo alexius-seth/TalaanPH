@@ -152,10 +152,10 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
-      <div className="w-full sm:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 animate-in fade-in duration-150">
+      <div className="w-full sm:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl max-h-[90dvh] flex flex-col">
         {/* Header */}
-        <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+        <div className="flex justify-between items-center pb-3 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-emerald-600" />
             <h3 className="text-lg font-bold text-gray-900">{t('inventoryTitle')}</h3>
@@ -166,7 +166,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
         </div>
 
         {/* Tab Controls */}
-        <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 rounded-xl my-4 text-xs font-bold">
+        <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 rounded-xl my-4 text-xs font-bold shrink-0">
           <button
             onClick={() => setActiveTab('LIST')}
             className={`py-2 rounded-lg transition ${
@@ -195,7 +195,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
 
         {/* Tab 1: Product List */}
         {activeTab === 'LIST' && (
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+          <div className="flex-1 overflow-y-auto overscroll-contain space-y-2 pr-1 pb-6">
             {products.map((prod) => {
               const isLow = prod.currentStock <= prod.lowStockThreshold;
               const isOut = prod.currentStock <= 0;
@@ -254,7 +254,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
 
         {/* Tab 2: Break-Bulk Restock Form */}
         {activeTab === 'RESTOCK' && (
-          <form onSubmit={handleRestockSubmit} className="flex-1 overflow-y-auto space-y-4 pr-1">
+          <form onSubmit={handleRestockSubmit} className="flex-1 overflow-y-auto overscroll-contain space-y-4 pr-1 pb-6">
             {restockSuccessMsg && (
               <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-1.5">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -376,7 +376,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
 
         {/* Tab 3: Add New Product Form */}
         {activeTab === 'NEW' && (
-          <form onSubmit={handleCreateProductSubmit} className="flex-1 overflow-y-auto space-y-3 pr-1">
+          <form onSubmit={handleCreateProductSubmit} className="flex-1 overflow-y-auto overscroll-contain space-y-3 pr-1 pb-6">
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">Pangalan ng Produkto *</label>
               <input

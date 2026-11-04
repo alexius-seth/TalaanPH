@@ -83,9 +83,9 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 animate-in fade-in duration-150">
-      <div className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[92vh] overflow-y-auto space-y-4">
+      <div className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl max-h-[90dvh] flex flex-col">
         {/* Header */}
-        <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+        <div className="flex justify-between items-center border-b border-gray-100 pb-3 shrink-0">
           <div className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-amber-600" />
             <h3 className="text-base font-bold text-gray-900">{t('dueTodayTitle')}</h3>
@@ -99,7 +99,8 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
           </button>
         </div>
 
-        {/* Customer tabs (if multiple customers due) */}
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6 space-y-4">
+          {/* Customer tabs (if multiple customers due) */}
         {dueItems && dueItems.length > 1 && (
           <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5">
             {dueItems.map((item) => {
@@ -246,6 +247,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
           >
             {t('doneClose')}
           </button>
+        </div>
         </div>
       </div>
     </div>

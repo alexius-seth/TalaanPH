@@ -104,9 +104,9 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
-      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-6 shadow-xl max-h-[95vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 animate-in fade-in duration-150">
+      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-xl max-h-[90dvh] flex flex-col">
+        <div className="flex justify-between items-center pb-3 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <Edit className="w-5 h-5 text-emerald-600" />
             <h3 className="text-lg font-bold text-gray-900">{t('editCustomerTitle', { name: customer.nickname })}</h3>
@@ -119,14 +119,15 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
           </button>
         </div>
 
-        {errorMsg && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+        <div className="overflow-y-auto flex-1 overscroll-contain pt-3 pb-6">
+          {errorMsg && (
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">
               {t('nicknameLabel')}
@@ -236,6 +237,7 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
               <span>{t('archiveBtn')}</span>
             </button>
           </div>
+        </div>
         </div>
       </div>
     </div>
